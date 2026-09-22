@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { usePersistedState } from '@/hooks/usePersistedState';
 import { CurrencyInput } from '@/components/ui/CurrencyInput';
 import { CalculationBreakdown } from '@/components/shared/CalculationBreakdown';
 import { Disclaimer } from '@/components/shared/Disclaimer';
@@ -15,8 +16,8 @@ function parseBrNumber(input: string): number {
 }
 
 export function MaternityLeaveCalculator() {
-  const [amount, setAmount] = useState('');
-  const [extended, setExtended] = useState(false);
+  const [amount, setAmount] = usePersistedState('calculadora-salario-maternidade:amount', '');
+  const [extended, setExtended] = usePersistedState('calculadora-salario-maternidade:extended', false);
   const [result, setResult] = useState<CalculationResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 

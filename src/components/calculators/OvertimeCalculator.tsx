@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { usePersistedState } from '@/hooks/usePersistedState';
 import { CurrencyInput } from '@/components/ui/CurrencyInput';
 import { NumberInput } from '@/components/ui/NumberInput';
 import { CalculationBreakdown } from '@/components/shared/CalculationBreakdown';
@@ -16,12 +17,12 @@ function parseBrNumber(input: string): number {
 }
 
 export function OvertimeCalculator() {
-  const [gross, setGross] = useState('');
-  const [monthlyHours, setMonthlyHours] = useState('220');
-  const [hours50, setHours50] = useState('0');
-  const [hours100, setHours100] = useState('0');
-  const [workingDays, setWorkingDays] = useState('22');
-  const [sundaysHolidays, setSundaysHolidays] = useState('4');
+  const [gross, setGross] = usePersistedState('calculadora-hora-extra:gross', '');
+  const [monthlyHours, setMonthlyHours] = usePersistedState('calculadora-hora-extra:monthlyHours', '220');
+  const [hours50, setHours50] = usePersistedState('calculadora-hora-extra:hours50', '0');
+  const [hours100, setHours100] = usePersistedState('calculadora-hora-extra:hours100', '0');
+  const [workingDays, setWorkingDays] = usePersistedState('calculadora-hora-extra:workingDays', '22');
+  const [sundaysHolidays, setSundaysHolidays] = usePersistedState('calculadora-hora-extra:sundaysHolidays', '4');
   const [result, setResult] = useState<CalculationResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 

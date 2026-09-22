@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { usePersistedState } from '@/hooks/usePersistedState';
 import { CurrencyInput } from '@/components/ui/CurrencyInput';
 import { NumberInput } from '@/components/ui/NumberInput';
 import { CalculationBreakdown } from '@/components/shared/CalculationBreakdown';
@@ -16,11 +17,11 @@ function parseBrNumber(input: string): number {
 }
 
 export function UnemploymentInsuranceCalculator() {
-  const [s1, setS1] = useState('');
-  const [s2, setS2] = useState('');
-  const [s3, setS3] = useState('');
-  const [requestNumber, setRequestNumber] = useState('1');
-  const [monthsWorked, setMonthsWorked] = useState('12');
+  const [s1, setS1] = usePersistedState('calculadora-seguro-desemprego:s1', '');
+  const [s2, setS2] = usePersistedState('calculadora-seguro-desemprego:s2', '');
+  const [s3, setS3] = usePersistedState('calculadora-seguro-desemprego:s3', '');
+  const [requestNumber, setRequestNumber] = usePersistedState('calculadora-seguro-desemprego:requestNumber', '1');
+  const [monthsWorked, setMonthsWorked] = usePersistedState('calculadora-seguro-desemprego:monthsWorked', '12');
   const [result, setResult] = useState<CalculationResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 

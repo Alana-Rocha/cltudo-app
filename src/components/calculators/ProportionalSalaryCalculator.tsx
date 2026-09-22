@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { usePersistedState } from '@/hooks/usePersistedState';
 import { CurrencyInput } from '@/components/ui/CurrencyInput';
 import { NumberInput } from '@/components/ui/NumberInput';
 import { CalculationBreakdown } from '@/components/shared/CalculationBreakdown';
@@ -16,9 +17,9 @@ function parseBrNumber(input: string): number {
 }
 
 export function ProportionalSalaryCalculator() {
-  const [salary, setSalary] = useState('');
-  const [daysWorked, setDaysWorked] = useState('15');
-  const [dependents, setDependents] = useState('0');
+  const [salary, setSalary] = usePersistedState('calculadora-salario-proporcional:salary', '');
+  const [daysWorked, setDaysWorked] = usePersistedState('calculadora-salario-proporcional:daysWorked', '15');
+  const [dependents, setDependents] = usePersistedState('calculadora-salario-proporcional:dependents', '0');
   const [result, setResult] = useState<CalculationResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 

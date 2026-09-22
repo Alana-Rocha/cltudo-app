@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { usePersistedState } from '@/hooks/usePersistedState';
 import { CurrencyInput } from '@/components/ui/CurrencyInput';
 import { NumberInput } from '@/components/ui/NumberInput';
 import { CalculationBreakdown } from '@/components/shared/CalculationBreakdown';
@@ -16,9 +17,9 @@ function parseBrNumber(input: string): number {
 }
 
 export function CompTimeCalculator() {
-  const [salary, setSalary] = useState('');
-  const [monthlyHours, setMonthlyHours] = useState('220');
-  const [balance, setBalance] = useState('0');
+  const [salary, setSalary] = usePersistedState('calculadora-banco-de-horas:salary', '');
+  const [monthlyHours, setMonthlyHours] = usePersistedState('calculadora-banco-de-horas:monthlyHours', '220');
+  const [balance, setBalance] = usePersistedState('calculadora-banco-de-horas:balance', '0');
   const [result, setResult] = useState<CalculationResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 

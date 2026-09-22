@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { usePersistedState } from '@/hooks/usePersistedState';
 import { CurrencyInput } from '@/components/ui/CurrencyInput';
 import { NumberInput } from '@/components/ui/NumberInput';
 import { CalculationBreakdown } from '@/components/shared/CalculationBreakdown';
@@ -17,9 +18,9 @@ function parseBrNumber(input: string): number {
 }
 
 export function IrrfCalculator() {
-  const [income, setIncome] = useState('');
-  const [dependents, setDependents] = useState('0');
-  const [alimony, setAlimony] = useState('');
+  const [income, setIncome] = usePersistedState('calculadora-irrf:income', '');
+  const [dependents, setDependents] = usePersistedState('calculadora-irrf:dependents', '0');
+  const [alimony, setAlimony] = usePersistedState('calculadora-irrf:alimony', '');
   const [result, setResult] = useState<CalculationResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 

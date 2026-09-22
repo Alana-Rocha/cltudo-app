@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { usePersistedState } from '@/hooks/usePersistedState';
 import { CurrencyInput } from '@/components/ui/CurrencyInput';
 import { NumberInput } from '@/components/ui/NumberInput';
 import { CalculationBreakdown } from '@/components/shared/CalculationBreakdown';
@@ -16,9 +17,9 @@ function parseBrNumber(input: string): number {
 }
 
 export function ThirteenthCalculator() {
-  const [gross, setGross] = useState('');
-  const [months, setMonths] = useState('12');
-  const [dependents, setDependents] = useState('0');
+  const [gross, setGross] = usePersistedState('calculadora-13-salario:gross', '');
+  const [months, setMonths] = usePersistedState('calculadora-13-salario:months', '12');
+  const [dependents, setDependents] = usePersistedState('calculadora-13-salario:dependents', '0');
   const [result, setResult] = useState<CalculationResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { usePersistedState } from '@/hooks/usePersistedState';
 import { NumberInput } from '@/components/ui/NumberInput';
 import { DateInput } from '@/components/ui/DateInput';
 import { CalculationBreakdown } from '@/components/shared/CalculationBreakdown';
@@ -11,9 +12,9 @@ import { parseBrDate } from '@/lib/dates';
 import type { CalculationResult } from '@/engine/types';
 
 export function NoticeCalculator() {
-  const [admissionDate, setAdmissionDate] = useState('');
-  const [referenceDate, setReferenceDate] = useState('');
-  const [reason, setReason] = useState<'without_cause' | 'employee_resignation'>('without_cause');
+  const [admissionDate, setAdmissionDate] = usePersistedState('calculadora-aviso-previo:admissionDate', '');
+  const [referenceDate, setReferenceDate] = usePersistedState('calculadora-aviso-previo:referenceDate', '');
+  const [reason, setReason] = usePersistedState<'without_cause' | 'employee_resignation'>('calculadora-aviso-previo:reason', 'without_cause');
   const [result, setResult] = useState<CalculationResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { usePersistedState } from '@/hooks/usePersistedState';
 import { CurrencyInput } from '@/components/ui/CurrencyInput';
 import { NumberInput } from '@/components/ui/NumberInput';
 import { CalculationBreakdown } from '@/components/shared/CalculationBreakdown';
@@ -16,9 +17,9 @@ function parseBrNumber(input: string): number {
 }
 
 export function NightShiftCalculator() {
-  const [salary, setSalary] = useState('');
-  const [monthlyHours, setMonthlyHours] = useState('220');
-  const [nightHours, setNightHours] = useState('0');
+  const [salary, setSalary] = usePersistedState('calculadora-adicional-noturno:salary', '');
+  const [monthlyHours, setMonthlyHours] = usePersistedState('calculadora-adicional-noturno:monthlyHours', '220');
+  const [nightHours, setNightHours] = usePersistedState('calculadora-adicional-noturno:nightHours', '0');
   const [result, setResult] = useState<CalculationResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 

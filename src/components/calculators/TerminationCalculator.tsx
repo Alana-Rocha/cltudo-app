@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { usePersistedState } from '@/hooks/usePersistedState';
 import { CurrencyInput } from '@/components/ui/CurrencyInput';
 import { NumberInput } from '@/components/ui/NumberInput';
 import { DateInput } from '@/components/ui/DateInput';
@@ -27,19 +28,19 @@ const TERMINATION_TYPES: { value: TerminationType; label: string }[] = [
 ];
 
 export function TerminationCalculator() {
-  const [admissionDate, setAdmissionDate] = useState('');
-  const [terminationDate, setTerminationDate] = useState('');
-  const [gross, setGross] = useState('');
-  const [terminationType, setTerminationType] = useState<TerminationType>('without_cause');
-  const [noticeMode, setNoticeMode] = useState<NoticeMode>('indemnified');
-  const [daysWorked, setDaysWorked] = useState('30');
-  const [daysWorkedTouched, setDaysWorkedTouched] = useState(false);
-  const [dependents, setDependents] = useState('0');
-  const [fgtsBalance, setFgtsBalance] = useState('');
-  const [expiredVacationTaken, setExpiredVacationTaken] = useState('0');
-  const [expiredVacationOwed, setExpiredVacationOwed] = useState('0');
-  const [expiredVacationOwedTouched, setExpiredVacationOwedTouched] = useState(false);
-  const [expiredVacationDoubled, setExpiredVacationDoubled] = useState(false);
+  const [admissionDate, setAdmissionDate] = usePersistedState('calculadora-rescisao:admissionDate', '');
+  const [terminationDate, setTerminationDate] = usePersistedState('calculadora-rescisao:terminationDate', '');
+  const [gross, setGross] = usePersistedState('calculadora-rescisao:gross', '');
+  const [terminationType, setTerminationType] = usePersistedState<TerminationType>('calculadora-rescisao:terminationType', 'without_cause');
+  const [noticeMode, setNoticeMode] = usePersistedState<NoticeMode>('calculadora-rescisao:noticeMode', 'indemnified');
+  const [daysWorked, setDaysWorked] = usePersistedState('calculadora-rescisao:daysWorked', '30');
+  const [daysWorkedTouched, setDaysWorkedTouched] = usePersistedState('calculadora-rescisao:daysWorkedTouched', false);
+  const [dependents, setDependents] = usePersistedState('calculadora-rescisao:dependents', '0');
+  const [fgtsBalance, setFgtsBalance] = usePersistedState('calculadora-rescisao:fgtsBalance', '');
+  const [expiredVacationTaken, setExpiredVacationTaken] = usePersistedState('calculadora-rescisao:expiredVacationTaken', '0');
+  const [expiredVacationOwed, setExpiredVacationOwed] = usePersistedState('calculadora-rescisao:expiredVacationOwed', '0');
+  const [expiredVacationOwedTouched, setExpiredVacationOwedTouched] = usePersistedState('calculadora-rescisao:expiredVacationOwedTouched', false);
+  const [expiredVacationDoubled, setExpiredVacationDoubled] = usePersistedState('calculadora-rescisao:expiredVacationDoubled', false);
   const [result, setResult] = useState<CalculationResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { usePersistedState } from '@/hooks/usePersistedState';
 import { CurrencyInput } from '@/components/ui/CurrencyInput';
 import { NumberInput } from '@/components/ui/NumberInput';
 import { CalculationBreakdown } from '@/components/shared/CalculationBreakdown';
@@ -16,9 +17,9 @@ function parseBrNumber(input: string): number {
 }
 
 export function DsrCalculator() {
-  const [variableAmount, setVariableAmount] = useState('');
-  const [workingDays, setWorkingDays] = useState('22');
-  const [sundaysHolidays, setSundaysHolidays] = useState('4');
+  const [variableAmount, setVariableAmount] = usePersistedState('calculadora-dsr:variableAmount', '');
+  const [workingDays, setWorkingDays] = usePersistedState('calculadora-dsr:workingDays', '22');
+  const [sundaysHolidays, setSundaysHolidays] = usePersistedState('calculadora-dsr:sundaysHolidays', '4');
   const [result, setResult] = useState<CalculationResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 

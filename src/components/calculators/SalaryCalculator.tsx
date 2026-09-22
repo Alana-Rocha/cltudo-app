@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { usePersistedState } from '@/hooks/usePersistedState';
 import { CurrencyInput } from '@/components/ui/CurrencyInput';
 import { NumberInput } from '@/components/ui/NumberInput';
 import { CalculationBreakdown } from '@/components/shared/CalculationBreakdown';
@@ -17,12 +18,12 @@ function parseBrNumber(input: string): number {
 }
 
 export function SalaryCalculator() {
-  const [gross, setGross] = useState('');
-  const [dependents, setDependents] = useState('0');
-  const [showMore, setShowMore] = useState(false);
-  const [alimony, setAlimony] = useState('');
-  const [hasVt, setHasVt] = useState(false);
-  const [vtValue, setVtValue] = useState('');
+  const [gross, setGross] = usePersistedState('calculadora-salario-liquido:gross', '');
+  const [dependents, setDependents] = usePersistedState('calculadora-salario-liquido:dependents', '0');
+  const [showMore, setShowMore] = usePersistedState('calculadora-salario-liquido:showMore', false);
+  const [alimony, setAlimony] = usePersistedState('calculadora-salario-liquido:alimony', '');
+  const [hasVt, setHasVt] = usePersistedState('calculadora-salario-liquido:hasVt', false);
+  const [vtValue, setVtValue] = usePersistedState('calculadora-salario-liquido:vtValue', '');
   const [result, setResult] = useState<CalculationResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 

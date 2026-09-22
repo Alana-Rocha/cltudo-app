@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { usePersistedState } from '@/hooks/usePersistedState';
 import { CurrencyInput } from '@/components/ui/CurrencyInput';
 import { NumberInput } from '@/components/ui/NumberInput';
 import { CalculationBreakdown } from '@/components/shared/CalculationBreakdown';
@@ -25,11 +26,11 @@ const TERMINATION_TYPES: { value: TerminationType; label: string }[] = [
 ];
 
 export function FgtsCalculator() {
-  const [salary, setSalary] = useState('');
-  const [showRescission, setShowRescission] = useState(false);
-  const [terminationType, setTerminationType] = useState<TerminationType>('without_cause');
-  const [months, setMonths] = useState('12');
-  const [actualBalance, setActualBalance] = useState('');
+  const [salary, setSalary] = usePersistedState('calculadora-fgts:salary', '');
+  const [showRescission, setShowRescission] = usePersistedState('calculadora-fgts:showRescission', false);
+  const [terminationType, setTerminationType] = usePersistedState<TerminationType>('calculadora-fgts:terminationType', 'without_cause');
+  const [months, setMonths] = usePersistedState('calculadora-fgts:months', '12');
+  const [actualBalance, setActualBalance] = usePersistedState('calculadora-fgts:actualBalance', '');
   const [result, setResult] = useState<CalculationResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 

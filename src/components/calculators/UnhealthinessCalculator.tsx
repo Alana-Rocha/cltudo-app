@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { usePersistedState } from '@/hooks/usePersistedState';
 import { CurrencyInput } from '@/components/ui/CurrencyInput';
 import { CalculationBreakdown } from '@/components/shared/CalculationBreakdown';
 import { Disclaimer } from '@/components/shared/Disclaimer';
@@ -15,8 +16,8 @@ function parseBrNumber(input: string): number {
 }
 
 export function UnhealthinessCalculator() {
-  const [grade, setGrade] = useState<UnhealthinessGrade>('medium');
-  const [customBase, setCustomBase] = useState('');
+  const [grade, setGrade] = usePersistedState<UnhealthinessGrade>('calculadora-insalubridade:grade', 'medium');
+  const [customBase, setCustomBase] = usePersistedState('calculadora-insalubridade:customBase', '');
   const [result, setResult] = useState<CalculationResult | null>(null);
 
   function handleSubmit(e: React.FormEvent) {

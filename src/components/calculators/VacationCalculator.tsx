@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { usePersistedState } from '@/hooks/usePersistedState';
 import { CurrencyInput } from '@/components/ui/CurrencyInput';
 import { NumberInput } from '@/components/ui/NumberInput';
 import { CalculationBreakdown } from '@/components/shared/CalculationBreakdown';
@@ -16,10 +17,10 @@ function parseBrNumber(input: string): number {
 }
 
 export function VacationCalculator() {
-  const [gross, setGross] = useState('');
-  const [daysTaken, setDaysTaken] = useState('30');
-  const [daysSold, setDaysSold] = useState('0');
-  const [dependents, setDependents] = useState('0');
+  const [gross, setGross] = usePersistedState('calculadora-ferias:gross', '');
+  const [daysTaken, setDaysTaken] = usePersistedState('calculadora-ferias:daysTaken', '30');
+  const [daysSold, setDaysSold] = usePersistedState('calculadora-ferias:daysSold', '0');
+  const [dependents, setDependents] = usePersistedState('calculadora-ferias:dependents', '0');
   const [result, setResult] = useState<CalculationResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 

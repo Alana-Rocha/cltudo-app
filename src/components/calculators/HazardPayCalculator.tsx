@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { usePersistedState } from '@/hooks/usePersistedState';
 import { CurrencyInput } from '@/components/ui/CurrencyInput';
 import { CalculationBreakdown } from '@/components/shared/CalculationBreakdown';
 import { Disclaimer } from '@/components/shared/Disclaimer';
@@ -15,7 +16,7 @@ function parseBrNumber(input: string): number {
 }
 
 export function HazardPayCalculator() {
-  const [salary, setSalary] = useState('');
+  const [salary, setSalary] = usePersistedState('calculadora-periculosidade:salary', '');
   const [result, setResult] = useState<CalculationResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
