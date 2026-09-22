@@ -54,3 +54,14 @@ export function min(...values: Cents[]): Cents {
 export function max(...values: Cents[]): Cents {
   return Math.max(...values);
 }
+
+/**
+ * Masks free-typed digits into a BRL amount string (e.g. "1.234,56"),
+ * treating the digits as cents — the common "digitação de centavos" UX.
+ */
+export function maskBrCurrencyInput(raw: string): string {
+  const digits = raw.replace(/\D/g, '').replace(/^0+(?=\d)/, '');
+  if (!digits) return '';
+  const cents = Number(digits);
+  return (cents / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}

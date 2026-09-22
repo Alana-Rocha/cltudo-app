@@ -1,5 +1,23 @@
 import { describe, it, expect } from 'vitest';
-import { countAvos, fullYearsBetween, addDays } from '../dates';
+import { countAvos, fullYearsBetween, addDays, maskBrDateInput } from '../dates';
+
+describe('maskBrDateInput — máscara automática dd/mm/aaaa', () => {
+  it('insere as barras conforme o usuário digita números', () => {
+    expect(maskBrDateInput('0')).toBe('0');
+    expect(maskBrDateInput('01')).toBe('01');
+    expect(maskBrDateInput('011')).toBe('01/1');
+    expect(maskBrDateInput('01012026')).toBe('01/01/2026');
+  });
+
+  it('ignora caracteres não numéricos digitados pelo usuário', () => {
+    expect(maskBrDateInput('01/01/2026')).toBe('01/01/2026');
+    expect(maskBrDateInput('ab01cd01ef2026')).toBe('01/01/2026');
+  });
+
+  it('trunca em 8 dígitos (ddmmaaaa)', () => {
+    expect(maskBrDateInput('010120269999')).toBe('01/01/2026');
+  });
+});
 
 describe('countAvos — regra dos 15 dias', () => {
   it('exatamente 15 dias no mês conta como avo inteiro', () => {

@@ -92,6 +92,13 @@ export function parseBrDate(input: string): Date | null {
   return valid ? date : null;
 }
 
+/** Masks free-typed digits into a dd/mm/aaaa string, inserting "/" as the user types. */
+export function maskBrDateInput(raw: string): string {
+  const digits = raw.replace(/\D/g, '').slice(0, 8);
+  const parts = [digits.slice(0, 2), digits.slice(2, 4), digits.slice(4, 8)].filter(Boolean);
+  return parts.join('/');
+}
+
 export function formatBrDate(date: Date): string {
   const dd = String(date.getUTCDate()).padStart(2, '0');
   const mm = String(date.getUTCMonth() + 1).padStart(2, '0');

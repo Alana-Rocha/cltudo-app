@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { CurrencyInput } from '@/components/ui/CurrencyInput';
 import { NumberInput } from '@/components/ui/NumberInput';
+import { DateInput } from '@/components/ui/DateInput';
 import { CalculationBreakdown } from '@/components/shared/CalculationBreakdown';
 import { Disclaimer } from '@/components/shared/Disclaimer';
 import { calculateTermination, type NoticeMode } from '@/engine/termination';
@@ -104,32 +105,8 @@ export function TerminationCalculator() {
     <div>
       <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border bg-white p-6">
         <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label htmlFor="admission" className="mb-1 block text-sm font-medium">
-              Data de admissão
-            </label>
-            <input
-              id="admission"
-              type="text"
-              placeholder="dd/mm/aaaa"
-              value={admissionDate}
-              onChange={(e) => setAdmissionDate(e.target.value)}
-              className="w-full rounded-md border px-3 py-2"
-            />
-          </div>
-          <div>
-            <label htmlFor="termination" className="mb-1 block text-sm font-medium">
-              Data de desligamento
-            </label>
-            <input
-              id="termination"
-              type="text"
-              placeholder="dd/mm/aaaa"
-              value={terminationDate}
-              onChange={(e) => setTerminationDate(e.target.value)}
-              className="w-full rounded-md border px-3 py-2"
-            />
-          </div>
+          <DateInput id="admission" label="Data de admissão" value={admissionDate} onChange={setAdmissionDate} />
+          <DateInput id="termination" label="Data de desligamento" value={terminationDate} onChange={setTerminationDate} />
         </div>
 
         <CurrencyInput id="gross" label="Salário bruto" value={gross} onChange={setGross} required error={error ?? undefined} />

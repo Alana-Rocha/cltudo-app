@@ -1,5 +1,7 @@
 'use client';
 
+import { maskBrCurrencyInput } from '@/lib/money';
+
 type Props = {
   id: string;
   label: string;
@@ -20,9 +22,9 @@ export function CurrencyInput({ id, label, value, onChange, required, error }: P
         <input
           id={id}
           type="text"
-          inputMode="decimal"
+          inputMode="numeric"
           value={value}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={(e) => onChange(maskBrCurrencyInput(e.target.value))}
           required={required}
           aria-invalid={!!error}
           aria-describedby={error ? `${id}-error` : undefined}
