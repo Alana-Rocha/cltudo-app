@@ -94,6 +94,10 @@ input[type='checkbox'] {
   @apply text-brand-400;
 }
 
+.dark .text-brand-500 {
+  @apply text-brand-400;
+}
+
 .dark .text-red-600 {
   @apply text-red-400;
 }

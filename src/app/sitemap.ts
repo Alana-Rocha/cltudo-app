@@ -1,7 +1,7 @@
 import type { MetadataRoute } from 'next';
 import { registry } from '@/registry';
 
-const BASE_URL = process.env.SITE_URL ?? 'https://calculadora-trabalhista.example.com';
+const BASE_URL = process.env.SITE_URL ?? 'https://cltudo.example.com';
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const staticEntries: MetadataRoute.Sitemap = [

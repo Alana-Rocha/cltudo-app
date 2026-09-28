@@ -13,11 +13,12 @@ const inter = Inter({ subsets: ['latin'], display: 'swap' });
 
 export const metadata: Metadata = {
   title: {
-    default: 'Calculadora Trabalhista',
-    template: '%s | Calculadora Trabalhista',
+    default: 'CLTudo — calculadora trabalhista',
+    template: '%s | CLTudo',
   },
   description:
-    'Calcule salário, rescisão, férias, 13º, FGTS e outros valores trabalhistas de forma simples.',
+    'CLTudo: calcule salário líquido, rescisão, férias, 13º, FGTS e compare CLT x PJ, com as regras de 2026 e o passo a passo de cada conta.',
+  applicationName: 'CLTudo',
 };
 
 // Aplica o tema salvo (ou a preferência do sistema) antes da 1ª pintura,
