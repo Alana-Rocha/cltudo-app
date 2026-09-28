@@ -47,8 +47,8 @@ export function RaiseCalculator() {
   const { result, errorFor, handleSubmit, resultRef } = useLiveCalculation(compute());
 
   return (
-    <div>
-      <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border bg-white p-6">
+    <div className="calc-layout">
+      <form onSubmit={handleSubmit} className="card space-y-4 p-6">
         <CurrencyInput id="current" label="Salário bruto atual" value={current} onChange={setCurrent} required error={errorFor('current')} />
 
         <div>
@@ -78,7 +78,7 @@ export function RaiseCalculator() {
           Calcular
         </button>
       </form>
-      <div ref={resultRef} className="scroll-mt-20">
+      <div ref={resultRef} className="calc-result scroll-mt-20">
         {result && <CalculationBreakdown result={result} headline={{ label: 'Aumento líquido por mês' }} />}
       </div>
       <Disclaimer />

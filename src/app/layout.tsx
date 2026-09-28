@@ -2,7 +2,11 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import { Logo } from '@/components/ui/Logo';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import Link from 'next/link';
 import { RelatedCalculators } from '@/components/shared/RelatedCalculators';
+import { Breadcrumb } from '@/components/shared/Breadcrumb';
+import { SiteNav } from '@/components/shared/SiteNav';
+import { SiteFooter } from '@/components/shared/SiteFooter';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'], display: 'swap' });
@@ -45,23 +49,22 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className={`${inter.className} min-h-screen`}>
         <header className="sticky top-0 z-10 border-b bg-white/80 backdrop-blur print:hidden">
-          <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-3">
-            <a href="/" className="transition hover:opacity-80">
+          <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
+            <Link href="/" className="transition hover:opacity-80">
               <Logo />
-            </a>
-            <ThemeToggle />
+            </Link>
+            <div className="flex items-center gap-2">
+              <SiteNav />
+              <ThemeToggle />
+            </div>
           </div>
         </header>
-        <main className="mx-auto max-w-4xl px-4 py-8">
+        <main className="mx-auto max-w-6xl px-4 py-8 sm:py-10">
+          <Breadcrumb />
           {children}
           <RelatedCalculators />
         </main>
-        <footer className="border-t">
-          <p className="mx-auto max-w-4xl px-4 py-8 text-sm text-gray-500">
-            Calculadora Trabalhista — gratuita e sem cadastro. Os valores são estimativas
-            informativas e não substituem o holerite nem a orientação de um profissional.
-          </p>
-        </footer>
+        <SiteFooter />
       </body>
     </html>
   );

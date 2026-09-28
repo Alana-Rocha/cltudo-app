@@ -34,8 +34,8 @@ export function NightShiftCalculator() {
   const { result, error, handleSubmit, resultRef } = useLiveCalculation(compute());
 
   return (
-    <div>
-      <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border bg-white p-6">
+    <div className="calc-layout">
+      <form onSubmit={handleSubmit} className="card space-y-4 p-6">
         <CurrencyInput id="salary" label="Salário bruto" value={salary} onChange={setSalary} required error={error} />
         <NumberInput id="monthlyHours" label="Jornada mensal (horas)" value={monthlyHours} onChange={setMonthlyHours} min={1} />
         <NumberInput id="nightHours" label="Horas trabalhadas no período noturno (22h–5h)" value={nightHours} onChange={setNightHours} min={0} />
@@ -43,7 +43,7 @@ export function NightShiftCalculator() {
           Calcular
         </button>
       </form>
-      <div ref={resultRef} className="scroll-mt-20">
+      <div ref={resultRef} className="calc-result scroll-mt-20">
         {result && <CalculationBreakdown result={result} headline={{ label: 'Total com adicional noturno' }} />}
       </div>
       <Disclaimer />

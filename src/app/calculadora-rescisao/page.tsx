@@ -51,12 +51,12 @@ export default function TerminationPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold">Calculadora de Rescisão</h1>
-      <p className="mt-2 text-gray-600">
+      <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Calculadora de Rescisão</h1>
+      <p className="mt-3 max-w-3xl text-base text-gray-600 sm:text-lg">
         Informe as datas do contrato, o salário e o tipo de desligamento para ver quais verbas são
         devidas e o valor líquido a receber.
       </p>
-      <div className="mt-6">
+      <div className="mt-8">
         <TerminationCalculator />
       </div>
       <WorkedExamples examples={examples} />

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { formatCurrency, formatDecimal } from '@/lib/format';
-import type { CalculationResult } from '@/engine/types';
+import type { CalculationResult, LineItem } from '@/engine/types';
 import { ResultActions } from './ResultActions';
 
 function formatStepValue(value: number, unit: 'currency' | 'days' | 'hours' | undefined): string {
@@ -21,6 +21,38 @@ function formatRulesVersion(id: string): string {
   });
 }
 
+const DEFAULT_GROUP: Record<LineItem['type'], string> = {
+  earning: 'Proventos',
+  deduction: 'Descontos',
+  info: 'Resumo',
+};
+
+function groupItems(items: LineItem[]): { title: string; items: LineItem[] }[] {
+  const groups: { title: string; items: LineItem[] }[] = [];
+  for (const item of items) {
+    const title = item.group ?? DEFAULT_GROUP[item.type];
+    const existing = groups.find((g) => g.title === title);
+    if (existing) existing.items.push(item);
+    else groups.push({ title, items: [item] });
+  }
+  return groups;
+}
+
+function ItemAmount({ item }: { item: LineItem }) {
+  if (item.type === 'info') {
+    return item.amount !== 0 ? (
+      <span className="shrink-0 whitespace-nowrap text-sm text-gray-500">{formatCurrency(item.amount)}</span>
+    ) : null;
+  }
+  const negative = item.type === 'deduction' || item.amount < 0;
+  return (
+    <span className={`shrink-0 whitespace-nowrap font-medium tabular-nums ${negative ? 'text-red-600' : 'text-gray-900'}`}>
+      {item.type === 'deduction' && item.amount >= 0 ? '− ' : ''}
+      {formatCurrency(Math.abs(item.amount))}
+    </span>
+  );
+}
+
 type Headline = { label: string; field?: 'net' | 'deductions'; absolute?: boolean };
 
 export function CalculationBreakdown({
@@ -36,6 +68,7 @@ export function CalculationBreakdown({
   const rawHeadline = result.totals[headline.field ?? 'net'];
   const headlineValue = headline.absolute ? Math.abs(rawHeadline) : rawHeadline;
   const isMonetary = result.totals.gross !== 0 || result.totals.deductions !== 0 || result.totals.net !== 0;
+  const groups = groupItems(result.items);
 
   // Announce only once the result settles, not on every keystroke of a live calculation.
   const summaryText = isMonetary
@@ -48,11 +81,11 @@ export function CalculationBreakdown({
   }, [summaryText]);
 
   return (
-    <div className="mt-6 rounded-lg border bg-white">
+    <div className="card overflow-hidden">
       {isMonetary && (
-        <div className="border-b p-6 text-center">
-          <p className="text-sm text-gray-500">{headline.label}</p>
-          <p className="text-3xl font-bold text-brand-700">{formatCurrency(headlineValue)}</p>
+        <div className="result-hero border-b px-6 py-7 text-center">
+          <p className="text-sm font-medium text-gray-600">{headline.label}</p>
+          <p className="mt-1 text-4xl font-bold tracking-tight text-brand-700 tabular-nums">{formatCurrency(headlineValue)}</p>
           {summary}
         </div>
       )}
@@ -61,33 +94,37 @@ export function CalculationBreakdown({
         {announcement}
       </p>
 
-      <ul className="divide-y">
-        {result.items.map((item) => (
-          <li key={item.key} className="flex items-center justify-between gap-4 px-6 py-3">
-            <div>
-              <p className="text-sm font-medium">{item.label}</p>
-              <p className="text-xs text-gray-500">{item.explanation}</p>
-            </div>
-            {item.type === 'info' ? (
-              item.amount !== 0 && (
-                <span className="shrink-0 whitespace-nowrap text-sm text-gray-500">{formatCurrency(item.amount)}</span>
-              )
-            ) : (
-              <span
-                className={`shrink-0 whitespace-nowrap font-medium ${
-                  item.type === 'deduction' || item.amount < 0 ? 'text-red-600' : 'text-gray-900'
-                }`}
-              >
-                {item.type === 'deduction' && item.amount >= 0 ? '− ' : ''}
-                {formatCurrency(Math.abs(item.amount))}
-              </span>
+      {groups.map((group) => {
+        const deductions = group.items.filter((i) => i.type === 'deduction');
+        const subtotal = deductions.reduce((sum, i) => sum + Math.abs(i.amount), 0);
+        return (
+          <section key={group.title} className="border-b last:border-b-0">
+            {groups.length > 1 && (
+              <h3 className="px-6 pb-1 pt-4 text-xs font-semibold uppercase tracking-wide text-gray-500">{group.title}</h3>
             )}
-          </li>
-        ))}
-      </ul>
+            <ul className="divide-y">
+              {group.items.map((item) => (
+                <li key={item.key} className="flex items-center justify-between gap-4 px-6 py-3">
+                  <div>
+                    <p className="text-sm font-medium">{item.label}</p>
+                    <p className="text-xs text-gray-500">{item.explanation}</p>
+                  </div>
+                  <ItemAmount item={item} />
+                </li>
+              ))}
+              {deductions.length > 1 && deductions.length === group.items.length && (
+                <li className="flex items-center justify-between gap-4 bg-gray-50 px-6 py-2.5">
+                  <p className="text-sm font-semibold">Total de descontos</p>
+                  <span className="shrink-0 whitespace-nowrap font-semibold tabular-nums text-red-600">− {formatCurrency(subtotal)}</span>
+                </li>
+              )}
+            </ul>
+          </section>
+        );
+      })}
 
       {result.warnings.length > 0 && (
-        <div className="border-t bg-amber-50 px-6 py-3 text-sm text-amber-800">
+        <div className="space-y-1 border-t bg-amber-50 px-6 py-3 text-sm text-amber-800">
           {result.warnings.map((w, i) => (
             <p key={i}>{w}</p>
           ))}
@@ -95,7 +132,9 @@ export function CalculationBreakdown({
       )}
 
       {(result.included.length > 0 || result.excluded.length > 0) && (
-        <div className="grid gap-4 border-t p-6 sm:grid-cols-2">
+        <div
+          className={`grid gap-4 border-t p-6 ${result.included.length > 0 && result.excluded.length > 0 ? 'sm:grid-cols-2' : ''}`}
+        >
           {result.included.length > 0 && (
             <div>
               <p className="mb-2 text-sm font-semibold text-brand-700">Verbas incluídas</p>
@@ -134,9 +173,13 @@ export function CalculationBreakdown({
             <tbody>
               {result.steps.map((step, i) => (
                 <tr key={i} className="border-b last:border-0">
-                  <td className="py-2 pr-4 text-gray-500">{step.label}</td>
-                  <td className="py-2 pr-4 font-mono text-xs text-gray-400">{step.formula}</td>
-                  <td className="py-2 text-right font-medium">{formatStepValue(step.value, step.unit)}</td>
+                  <td className="py-2 pr-4">
+                    <span className="block text-gray-600">{step.label}</span>
+                    <span className="block font-mono text-xs text-gray-400">{step.formula}</span>
+                  </td>
+                  <td className="whitespace-nowrap py-2 text-right align-top font-medium tabular-nums">
+                    {formatStepValue(step.value, step.unit)}
+                  </td>
                 </tr>
               ))}
             </tbody>

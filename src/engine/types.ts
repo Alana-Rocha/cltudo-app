@@ -7,6 +7,8 @@ export type LineItem = {
   type: 'earning' | 'deduction' | 'info';
   explanation: string;
   legalBasis?: string;
+  /** Section heading in the result; defaults to one derived from `type`. */
+  group?: string;
 };
 
 export type Step = {

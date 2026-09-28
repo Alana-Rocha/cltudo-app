@@ -126,25 +126,25 @@ export function calculateCltVsPj(input: CltVsPjInput, rules: RuleSet): Calculati
 
   return {
     items: [
-      { key: 'clt-salaries', label: 'CLT — 11 salários líquidos', amount: clt.salaries, type: 'earning', explanation: 'O 12º mês é pago como férias' },
-      { key: 'clt-vacation', label: 'CLT — férias com 1/3 (líquido)', amount: clt.vacationNet, type: 'earning', explanation: '30 dias de férias' },
-      { key: 'clt-13', label: 'CLT — 13º (líquido)', amount: clt.thirteenthNet, type: 'earning', explanation: '1ª + 2ª parcela' },
-      { key: 'clt-fgts', label: 'CLT — FGTS depositado', amount: clt.fgts, type: 'earning', explanation: 'Sobre salários, 13º e 1/3 de férias' },
-      ...(clt.benefits > 0 ? [{ key: 'clt-benefits', label: 'CLT — benefícios', amount: clt.benefits, type: 'earning' as const, explanation: '12 meses' }] : []),
-      { key: 'clt-total', label: 'Total CLT por ano', amount: clt.total, type: 'info', explanation: `${formatCurrency(Math.round(clt.total / 12))} por mês, em média` },
+      { key: 'clt-salaries', label: '11 salários líquidos', group: 'CLT (por ano)', amount: clt.salaries, type: 'earning', explanation: 'O 12º mês é pago como férias' },
+      { key: 'clt-vacation', label: 'Férias com 1/3 (líquido)', group: 'CLT (por ano)', amount: clt.vacationNet, type: 'earning', explanation: '30 dias de férias' },
+      { key: 'clt-13', label: '13º (líquido)', group: 'CLT (por ano)', amount: clt.thirteenthNet, type: 'earning', explanation: '1ª + 2ª parcela' },
+      { key: 'clt-fgts', label: 'FGTS depositado', group: 'CLT (por ano)', amount: clt.fgts, type: 'earning', explanation: 'Sobre salários, 13º e 1/3 de férias' },
+      ...(clt.benefits > 0 ? [{ key: 'clt-benefits', label: 'Benefícios', group: 'CLT (por ano)', amount: clt.benefits, type: 'earning' as const, explanation: '12 meses' }] : []),
+      { key: 'clt-total', label: 'Total CLT por ano', group: 'CLT (por ano)', amount: clt.total, type: 'info', explanation: `${formatCurrency(Math.round(clt.total / 12))} por mês, em média` },
       ...(pj
         ? [
-            { key: 'pj-revenue', label: 'PJ — faturamento anual', amount: year(input.pjMonthlyRevenue), type: 'earning' as const, explanation: `${formatCurrency(input.pjMonthlyRevenue)} × 12` },
-            { key: 'pj-das', label: 'PJ — impostos do Simples (DAS)', amount: year(pj.das), type: 'deduction' as const, explanation: `Anexo ${pj.annex}, ${formatPercent(pj.effectiveRate, 2)} do faturamento`, legalBasis: 'LC 123/2006' },
-            { key: 'pj-inss', label: 'PJ — INSS do pró-labore', amount: year(pj.inss), type: 'deduction' as const, explanation: `${formatPercent(rules.proLabore.inssRate, 0)} de ${formatCurrency(pj.proLabore)}` },
-            { key: 'pj-irrf', label: 'PJ — IRRF do pró-labore', amount: year(pj.irrf), type: 'deduction' as const, explanation: 'Tabela mensal do IR' },
-            ...(costs > 0 ? [{ key: 'pj-costs', label: 'PJ — custos da empresa', amount: year(costs), type: 'deduction' as const, explanation: 'Contador, taxas etc.' }] : []),
-            ...(pj.dividendTax > 0 ? [{ key: 'pj-dividends', label: 'PJ — IR sobre dividendos', amount: year(pj.dividendTax), type: 'deduction' as const, explanation: 'Lei 15.270/2025' }] : []),
-            { key: 'pj-total', label: 'Total PJ por ano', amount: pjAnnual, type: 'info' as const, explanation: `${formatCurrency(pj.monthlyNet)} por mês` },
+            { key: 'pj-revenue', label: 'Faturamento anual', group: 'PJ (por ano)', amount: year(input.pjMonthlyRevenue), type: 'earning' as const, explanation: `${formatCurrency(input.pjMonthlyRevenue)} × 12` },
+            { key: 'pj-das', label: 'Impostos do Simples (DAS)', group: 'PJ (por ano)', amount: year(pj.das), type: 'deduction' as const, explanation: `Anexo ${pj.annex}, ${formatPercent(pj.effectiveRate, 2)} do faturamento`, legalBasis: 'LC 123/2006' },
+            { key: 'pj-inss', label: 'INSS do pró-labore', group: 'PJ (por ano)', amount: year(pj.inss), type: 'deduction' as const, explanation: `${formatPercent(rules.proLabore.inssRate, 0)} de ${formatCurrency(pj.proLabore)}` },
+            { key: 'pj-irrf', label: 'IRRF do pró-labore', group: 'PJ (por ano)', amount: year(pj.irrf), type: 'deduction' as const, explanation: 'Tabela mensal do IR' },
+            ...(costs > 0 ? [{ key: 'pj-costs', label: 'Custos da empresa', group: 'PJ (por ano)', amount: year(costs), type: 'deduction' as const, explanation: 'Contador, taxas etc.' }] : []),
+            ...(pj.dividendTax > 0 ? [{ key: 'pj-dividends', label: 'IR sobre dividendos', group: 'PJ (por ano)', amount: year(pj.dividendTax), type: 'deduction' as const, explanation: 'Lei 15.270/2025' }] : []),
+            { key: 'pj-total', label: 'Total PJ por ano', group: 'PJ (por ano)', amount: pjAnnual, type: 'info' as const, explanation: `${formatCurrency(pj.monthlyNet)} por mês` },
           ]
         : []),
       ...(equivalent !== null
-        ? [{ key: 'equivalent', label: 'Faturamento PJ para empatar com a CLT', amount: equivalent, type: 'info' as const, explanation: 'Por mês, com os mesmos custos informados' }]
+        ? [{ key: 'equivalent', label: 'Faturamento PJ para empatar com a CLT', group: 'Comparação', amount: equivalent, type: 'info' as const, explanation: 'Por mês, com os mesmos custos informados' }]
         : []),
     ],
     totals: { gross: pjAnnual, deductions: clt.total, net: subtract(pjAnnual, clt.total) },

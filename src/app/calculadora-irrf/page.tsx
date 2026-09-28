@@ -24,12 +24,12 @@ export default function IrrfPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold">Calculadora de IRRF</h1>
-      <p className="mt-2 text-gray-600">
+      <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Calculadora de IRRF</h1>
+      <p className="mt-3 max-w-3xl text-base text-gray-600 sm:text-lg">
         Informe o rendimento tributável e os dependentes para ver o Imposto de Renda Retido na
         Fonte.
       </p>
-      <div className="mt-6">
+      <div className="mt-8">
         <IrrfCalculator />
       </div>
       <WorkedExamples examples={examples} />

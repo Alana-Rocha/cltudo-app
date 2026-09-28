@@ -41,8 +41,8 @@ export function IrrfCalculator() {
   const { result, error, handleSubmit, resultRef } = useLiveCalculation(compute());
 
   return (
-    <div>
-      <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border bg-white p-6">
+    <div className="calc-layout">
+      <form onSubmit={handleSubmit} className="card space-y-4 p-6">
         <CurrencyInput id="income" label="Rendimento tributável (mensal)" value={income} onChange={setIncome} required error={error} />
         <NumberInput id="dependents" label="Número de dependentes" value={dependents} onChange={setDependents} min={0} />
         <CurrencyInput id="alimony" label="Pensão alimentícia (opcional)" value={alimony} onChange={setAlimony} />
@@ -54,7 +54,7 @@ export function IrrfCalculator() {
           Calcular
         </button>
       </form>
-      <div ref={resultRef} className="scroll-mt-20">
+      <div ref={resultRef} className="calc-result scroll-mt-20">
         {result && <CalculationBreakdown result={result} headline={{ label: 'IRRF retido na fonte', field: 'deductions' }} />}
       </div>
       <Disclaimer />

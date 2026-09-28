@@ -21,12 +21,12 @@ export default function MaternityLeavePage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold">Calculadora de Salário-Maternidade</h1>
-      <p className="mt-2 text-gray-600">
+      <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Calculadora de Salário-Maternidade</h1>
+      <p className="mt-3 max-w-3xl text-base text-gray-600 sm:text-lg">
         Para empregadas CLT: informe a remuneração mensal integral para ver o valor líquido do
         benefício, com os descontos de INSS e IRRF mês a mês.
       </p>
-      <div className="mt-6">
+      <div className="mt-8">
         <MaternityLeaveCalculator />
       </div>
       <WorkedExamples examples={examples} />

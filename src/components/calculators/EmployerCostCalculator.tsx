@@ -42,8 +42,8 @@ export function EmployerCostCalculator() {
   const { result, error, handleSubmit, resultRef } = useLiveCalculation(compute());
 
   return (
-    <div>
-      <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border bg-white p-6">
+    <div className="calc-layout">
+      <form onSubmit={handleSubmit} className="card space-y-4 p-6">
         <CurrencyInput id="salary" label="Salário bruto do funcionário" value={salary} onChange={setSalary} required error={error} />
 
         <div>
@@ -91,7 +91,7 @@ export function EmployerCostCalculator() {
           Calcular
         </button>
       </form>
-      <div ref={resultRef} className="scroll-mt-20">
+      <div ref={resultRef} className="calc-result scroll-mt-20">
         {result && <CalculationBreakdown result={result} headline={{ label: 'Custo mensal para a empresa' }} />}
       </div>
       <Disclaimer />

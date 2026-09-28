@@ -27,12 +27,12 @@ export default function CltVsPjPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold">Calculadora CLT x PJ</h1>
-      <p className="mt-2 text-gray-600">
+      <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Calculadora CLT x PJ</h1>
+      <p className="mt-3 max-w-3xl text-base text-gray-600 sm:text-lg">
         Compare as duas propostas no ano inteiro: de um lado salário, férias, 13º, FGTS e benefícios;
         do outro, o faturamento como PJ no Simples Nacional, menos impostos, pró-labore e custos.
       </p>
-      <div className="mt-6">
+      <div className="mt-8">
         <CltVsPjCalculator />
       </div>
       <WorkedExamples examples={examples} />

@@ -89,6 +89,15 @@ describe('TerminationCalculator', () => {
     expect(screen.getByText(/só há regras de INSS e IRRF/)).toBeTruthy();
   });
 
+  it('férias vencidas só entram quando a pessoa marca que tem', () => {
+    render(<TerminationCalculator />);
+    fillDates('01/03/2026', '20/08/2026');
+    expect(screen.queryByText(/Férias vencidas \(/)).toBeNull();
+
+    fireEvent.click(screen.getByLabelText(/Tenho férias vencidas/));
+    expect(screen.getByText('Férias vencidas (30 dias)')).toBeTruthy();
+  });
+
   it('média de variáveis entra no aviso prévio indenizado', () => {
     render(<TerminationCalculator />);
     fillDates('01/03/2026', '20/08/2026');
@@ -113,7 +122,7 @@ describe('VacationCalculator', () => {
 
 describe('CalculatorDirectory', () => {
   it('busca ignora acentos e esconde categorias vazias', () => {
-    render(<CalculatorDirectory />);
+    render(<CalculatorDirectory rulesLabel="janeiro de 2026" />);
     fireEvent.change(screen.getByLabelText('Buscar calculadora'), { target: { value: 'ferias' } });
 
     expect(screen.getByText('Férias')).toBeTruthy();
@@ -122,7 +131,7 @@ describe('CalculatorDirectory', () => {
   });
 
   it('mostra mensagem quando nada é encontrado', () => {
-    render(<CalculatorDirectory />);
+    render(<CalculatorDirectory rulesLabel="janeiro de 2026" />);
     fireEvent.change(screen.getByLabelText('Buscar calculadora'), { target: { value: 'xyz' } });
     expect(screen.getByText(/Nenhuma calculadora encontrada/)).toBeTruthy();
   });

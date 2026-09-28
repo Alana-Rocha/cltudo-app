@@ -22,12 +22,12 @@ export default function VacationPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold">Calculadora de Férias</h1>
-      <p className="mt-2 text-gray-600">
+      <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Calculadora de Férias</h1>
+      <p className="mt-3 max-w-3xl text-base text-gray-600 sm:text-lg">
         Informe o salário bruto, os dias de férias a gozar e, se quiser vender parte delas, o
         abono pecuniário.
       </p>
-      <div className="mt-6">
+      <div className="mt-8">
         <VacationCalculator />
       </div>
       <WorkedExamples examples={examples} />

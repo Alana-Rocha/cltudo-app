@@ -39,8 +39,8 @@ export function ThirteenthCalculator() {
   const { result, error, handleSubmit, resultRef } = useLiveCalculation(compute());
 
   return (
-    <div>
-      <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border bg-white p-6">
+    <div className="calc-layout">
+      <form onSubmit={handleSubmit} className="card space-y-4 p-6">
         <CurrencyInput id="gross" label="Salário bruto" value={gross} onChange={setGross} required error={error} />
         <CurrencyInput
           id="averageVariables"
@@ -55,7 +55,7 @@ export function ThirteenthCalculator() {
           Calcular
         </button>
       </form>
-      <div ref={resultRef} className="scroll-mt-20">
+      <div ref={resultRef} className="calc-result scroll-mt-20">
         {result && <CalculationBreakdown result={result} headline={{ label: '13º líquido (1ª + 2ª parcela)' }} />}
       </div>
       <Disclaimer />

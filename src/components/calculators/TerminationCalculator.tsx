@@ -39,6 +39,7 @@ export function TerminationCalculator() {
   const [daysWorkedTouched, setDaysWorkedTouched] = usePersistedState('calculadora-rescisao:daysWorkedTouched', false);
   const [dependents, setDependents] = usePersistedState('calculadora-rescisao:dependents', '0');
   const [fgtsBalance, setFgtsBalance] = usePersistedState('calculadora-rescisao:fgtsBalance', '');
+  const [hasExpiredVacation, setHasExpiredVacation] = usePersistedState('calculadora-rescisao:hasExpiredVacation', false);
   const [expiredVacationTaken, setExpiredVacationTaken] = usePersistedState('calculadora-rescisao:expiredVacationTaken', '0');
   const [expiredVacationOwed, setExpiredVacationOwed] = usePersistedState('calculadora-rescisao:expiredVacationOwed', '0');
   const [expiredVacationOwedTouched, setExpiredVacationOwedTouched] = usePersistedState('calculadora-rescisao:expiredVacationOwedTouched', false);
@@ -97,8 +98,8 @@ export function TerminationCalculator() {
         dependents: Number(dependents) || 0,
         daysWorkedInLastMonth: Number(daysWorked) || 0,
         actualFgtsBalance: fgtsBalance ? toCents(parseBrNumber(fgtsBalance)) : undefined,
-        expiredVacationDays: Number(expiredVacationOwed) || 0,
-        expiredVacationDoubled,
+        expiredVacationDays: hasExpiredVacation ? Number(expiredVacationOwed) || 0 : 0,
+        expiredVacationDoubled: hasExpiredVacation && expiredVacationDoubled,
       },
       rules
     );
@@ -107,8 +108,8 @@ export function TerminationCalculator() {
   const { result, errorFor, handleSubmit, resultRef } = useLiveCalculation(compute());
 
   return (
-    <div>
-      <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border bg-white p-6">
+    <div className="calc-layout">
+      <form onSubmit={handleSubmit} className="card space-y-4 p-6">
         <div className="grid grid-cols-2 gap-4">
           <DateInput id="admission" label="Data de admissão" value={admissionDate} onChange={setAdmissionDate} error={errorFor('admission')} />
           <DateInput id="termination" label="Data de desligamento" value={terminationDate} onChange={setTerminationDate} error={errorFor('termination')} />
@@ -175,50 +176,62 @@ export function TerminationCalculator() {
         <CurrencyInput id="fgts" label="Saldo do FGTS (opcional, para um valor exato)" value={fgtsBalance} onChange={setFgtsBalance} />
 
         <div className="space-y-4 rounded-md border border-dashed p-4">
-          <div>
-            <p className="text-sm font-medium">Férias vencidas</p>
-            <p className="text-xs text-gray-500">
-              Preencha apenas se você já tem um período aquisitivo completo (12 meses) com dias de férias ainda não
-              gozados. Deixe em 0 se este for o seu único período (proporcional), ainda em aberto.
-            </p>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <NumberInput
-              id="expiredTaken"
-              label="Dias já gozados desse período vencido"
-              value={expiredVacationTaken}
-              onChange={setExpiredVacationTaken}
-              min={0}
-              max={30}
-            />
-            <NumberInput
-              id="expiredOwed"
-              label="Dias a receber (vencidos)"
-              value={expiredVacationOwed}
-              onChange={(v) => {
-                setExpiredVacationOwed(v);
-                setExpiredVacationOwedTouched(true);
-              }}
-              min={0}
-              max={30}
-              hint="Sugerido como 30 − dias já gozados; ajuste se o período vencido não for de 30 dias."
-            />
-          </div>
-          <label className="flex items-center gap-2 text-sm">
+          <label className="flex items-start gap-2 text-sm">
             <input
               type="checkbox"
-              checked={expiredVacationDoubled}
-              onChange={(e) => setExpiredVacationDoubled(e.target.checked)}
+              className="mt-0.5"
+              checked={hasExpiredVacation}
+              onChange={(e) => setHasExpiredVacation(e.target.checked)}
             />
-            Período concessivo (12 meses após vencer) já expirou — pagar em dobro (Súmula 450 TST)
+            <span>
+              <span className="font-medium">Tenho férias vencidas</span>
+              <span className="block text-xs text-gray-500">
+                Marque só se você já completou um período aquisitivo de 12 meses e ainda não tirou todos os dias
+                de férias dele. As férias proporcionais do período atual já entram no cálculo.
+              </span>
+            </span>
           </label>
+          {hasExpiredVacation && (
+            <>
+              <div className="grid grid-cols-2 gap-4">
+                <NumberInput
+                  id="expiredTaken"
+                  label="Dias já gozados desse período vencido"
+                  value={expiredVacationTaken}
+                  onChange={setExpiredVacationTaken}
+                  min={0}
+                  max={30}
+                />
+                <NumberInput
+                  id="expiredOwed"
+                  label="Dias a receber (vencidos)"
+                  value={expiredVacationOwed}
+                  onChange={(v) => {
+                    setExpiredVacationOwed(v);
+                    setExpiredVacationOwedTouched(true);
+                  }}
+                  min={0}
+                  max={30}
+                  hint="Sugerido como 30 − dias já gozados; ajuste se o período vencido não for de 30 dias."
+                />
+              </div>
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={expiredVacationDoubled}
+                  onChange={(e) => setExpiredVacationDoubled(e.target.checked)}
+                />
+                Período concessivo (12 meses após vencer) já expirou — pagar em dobro (Súmula 450 TST)
+              </label>
+            </>
+          )}
         </div>
 
         <button type="submit" className="w-full rounded-md bg-brand-600 py-2 font-medium text-white hover:bg-brand-700">
           Calcular
         </button>
       </form>
-      <div ref={resultRef} className="scroll-mt-20">
+      <div ref={resultRef} className="calc-result scroll-mt-20">
         {result && <CalculationBreakdown result={result} headline={{ label: 'Total líquido da rescisão' }} />}
       </div>
       <Disclaimer />

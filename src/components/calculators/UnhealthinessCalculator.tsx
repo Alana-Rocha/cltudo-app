@@ -29,8 +29,8 @@ export function UnhealthinessCalculator() {
   const { result, handleSubmit, resultRef } = useLiveCalculation(compute());
 
   return (
-    <div>
-      <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border bg-white p-6">
+    <div className="calc-layout">
+      <form onSubmit={handleSubmit} className="card space-y-4 p-6">
         <div>
           <label htmlFor="grade" className="mb-1 block text-sm font-medium">
             Grau de insalubridade
@@ -46,7 +46,7 @@ export function UnhealthinessCalculator() {
           Calcular
         </button>
       </form>
-      <div ref={resultRef} className="scroll-mt-20">
+      <div ref={resultRef} className="calc-result scroll-mt-20">
         {result && <CalculationBreakdown result={result} headline={{ label: 'Adicional de insalubridade (mensal)' }} />}
       </div>
       <Disclaimer />

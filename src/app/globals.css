@@ -110,6 +110,114 @@ input[type='checkbox'] {
   @apply shadow-black/30;
 }
 
+/*
+ * Component classes. They are not covered by the `.dark .<utility>` overrides
+ * above (@apply inlines the styles), so each one declares its dark look here.
+ */
+@layer components {
+  .card {
+    @apply rounded-xl border border-gray-200 bg-white shadow-sm;
+  }
+
+  .result-hero {
+    background: linear-gradient(180deg, theme('colors.brand.50'), theme('colors.white'));
+  }
+
+  .hero {
+    @apply rounded-2xl border border-brand-100 px-6 py-10 sm:px-10 sm:py-12;
+    background:
+      radial-gradient(circle at 100% 0%, theme('colors.brand.100'), transparent 45%),
+      linear-gradient(180deg, theme('colors.brand.50'), theme('colors.white'));
+  }
+
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-full border border-brand-200 bg-white px-3 py-1 text-xs font-medium text-brand-700;
+  }
+}
+
+.dark .card {
+  background-color: theme('colors.gray.800');
+  border-color: theme('colors.gray.700');
+  box-shadow: none;
+}
+
+.dark .result-hero {
+  background: linear-gradient(180deg, rgb(21 128 61 / 0.18), transparent);
+}
+
+.dark .hero {
+  border-color: theme('colors.gray.700');
+  background:
+    radial-gradient(circle at 100% 0%, rgb(21 128 61 / 0.25), transparent 45%),
+    linear-gradient(180deg, rgb(21 128 61 / 0.12), transparent);
+}
+
+.dark .chip {
+  background-color: theme('colors.gray.800');
+  border-color: rgb(21 128 61 / 0.5);
+  color: theme('colors.brand.300');
+}
+
+/* Calculadoras: formulário e resultado empilhados; lado a lado a partir de 1024px. */
+.calc-result {
+  margin-top: 1.5rem;
+}
+
+.calc-result:empty {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .calc-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    /* A altura extra do resultado vai para a 2ª linha, e o aviso fica colado no formulário. */
+    grid-template-rows: auto 1fr;
+    gap: 1.5rem;
+    align-items: start;
+  }
+
+  .calc-layout > form {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  /* O sticky é limitado pelo grid inteiro; ocupando as duas linhas, nunca cobre o aviso. */
+  .calc-result {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    margin-top: 0;
+    position: sticky;
+    top: 5rem;
+  }
+
+  .calc-result:empty {
+    display: flex;
+    min-height: 18rem;
+    align-items: center;
+    justify-content: center;
+    border: 2px dashed theme('colors.gray.200');
+    padding: 2rem;
+  }
+
+  .calc-result:empty::before {
+    content: 'Preencha os campos ao lado para ver o resultado aqui.';
+    color: theme('colors.gray.400');
+    font-size: 0.875rem;
+    text-align: center;
+  }
+
+  .dark .calc-result:empty {
+    border-color: theme('colors.gray.700');
+  }
+
+  .calc-layout > .calc-disclaimer {
+    grid-column: 1;
+    grid-row: 2;
+    margin-top: 0;
+  }
+}
+
 @media print {
   form button {
     display: none;

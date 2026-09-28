@@ -1,3 +1,5 @@
+import { ChevronDown } from 'lucide-react';
+
 export type FaqItem = { question: string; answer: string };
 
 export function Faq({ items }: { items: FaqItem[] }) {
@@ -12,18 +14,21 @@ export function Faq({ items }: { items: FaqItem[] }) {
   };
 
   return (
-    <section className="mt-10 print:hidden" aria-labelledby="faq-heading">
+    <section className="mt-12 max-w-3xl print:hidden" aria-labelledby="faq-heading">
       <h2 id="faq-heading" className="text-xl font-semibold">
         Perguntas frequentes
       </h2>
-      <dl className="mt-4 space-y-4">
+      <div className="mt-4 space-y-3">
         {items.map((item, i) => (
-          <div key={i} className="rounded-lg border bg-white p-4">
-            <dt className="font-medium">{item.question}</dt>
-            <dd className="mt-1 text-sm text-gray-600">{item.answer}</dd>
-          </div>
+          <details key={i} className="card group px-5 py-4" open={i === 0}>
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-medium [&::-webkit-details-marker]:hidden">
+              {item.question}
+              <ChevronDown className="h-4 w-4 shrink-0 text-gray-400 transition group-open:rotate-180" aria-hidden="true" />
+            </summary>
+            <p className="mt-2 text-sm leading-relaxed text-gray-600">{item.answer}</p>
+          </details>
         ))}
-      </dl>
+      </div>
       {/* eslint-disable-next-line react/no-danger */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
     </section>

@@ -33,8 +33,8 @@ export function MaternityLeaveCalculator() {
   const { result, error, handleSubmit, resultRef } = useLiveCalculation(compute());
 
   return (
-    <div>
-      <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border bg-white p-6">
+    <div className="calc-layout">
+      <form onSubmit={handleSubmit} className="card space-y-4 p-6">
         <CurrencyInput id="amount" label="Remuneração mensal integral (empregada CLT)" value={amount} onChange={setAmount} required error={error} />
         <NumberInput id="dependents" label="Número de dependentes" value={dependents} onChange={setDependents} min={0} />
         <label className="flex items-center gap-2 text-sm">
@@ -45,7 +45,7 @@ export function MaternityLeaveCalculator() {
           Calcular
         </button>
       </form>
-      <div ref={resultRef} className="scroll-mt-20">
+      <div ref={resultRef} className="calc-result scroll-mt-20">
         {result && <CalculationBreakdown result={result} headline={{ label: 'Total líquido do benefício' }} />}
       </div>
       <Disclaimer />

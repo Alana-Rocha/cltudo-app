@@ -28,12 +28,12 @@ export default function OvertimePage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold">Calculadora de Hora Extra</h1>
-      <p className="mt-2 text-gray-600">
+      <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Calculadora de Hora Extra</h1>
+      <p className="mt-3 max-w-3xl text-base text-gray-600 sm:text-lg">
         Informe o salário bruto e as horas extras trabalhadas para ver o valor de cada percentual
         e o DSR sobre elas.
       </p>
-      <div className="mt-6">
+      <div className="mt-8">
         <OvertimeCalculator />
       </div>
       <WorkedExamples examples={examples} />

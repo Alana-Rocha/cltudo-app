@@ -33,8 +33,8 @@ export function DsrCalculator() {
   const { result, error, handleSubmit, resultRef } = useLiveCalculation(compute());
 
   return (
-    <div>
-      <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border bg-white p-6">
+    <div className="calc-layout">
+      <form onSubmit={handleSubmit} className="card space-y-4 p-6">
         <CurrencyInput id="variable" label="Remuneração variável no mês (comissões, etc.)" value={variableAmount} onChange={setVariableAmount} required error={error} />
         <div className="grid grid-cols-2 gap-4">
           <NumberInput id="workingDays" label="Dias úteis no mês" value={workingDays} onChange={setWorkingDays} min={1} max={31} />
@@ -44,7 +44,7 @@ export function DsrCalculator() {
           Calcular
         </button>
       </form>
-      <div ref={resultRef} className="scroll-mt-20">
+      <div ref={resultRef} className="calc-result scroll-mt-20">
         {result && <CalculationBreakdown result={result} headline={{ label: 'Variáveis + DSR' }} />}
       </div>
       <Disclaimer />

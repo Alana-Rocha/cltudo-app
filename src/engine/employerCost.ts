@@ -45,18 +45,18 @@ export function calculateEmployerCost(input: EmployerCostInput, rules: RuleSet):
 
   return {
     items: [
-      { key: 'salary', label: 'Salário bruto', amount: salary, type: 'earning', explanation: 'Valor informado' },
-      { key: 'thirteenth', label: '13º salário (provisão mensal)', amount: thirteenthProvision, type: 'earning', explanation: '1/12 do salário' },
-      { key: 'vacation', label: 'Férias + 1/3 (provisão mensal)', amount: vacationProvision, type: 'earning', explanation: '1/12 do salário + 1/3' },
-      { key: 'fgts', label: `FGTS (${pct(rules.fgts.monthlyRate)})`, amount: fgts, type: 'earning', explanation: 'Sobre salário, 13º e férias', legalBasis: 'Lei 8.036/1990' },
-      { key: 'cpp', label: `INSS patronal (${pct(rules.employerCosts.socialSecurityRate)})`, amount: cpp, type: 'earning', explanation: paysCpp ? 'Sobre salário, 13º e férias' : regimeNote, legalBasis: 'Lei 8.212/1991, art. 22, I' },
-      { key: 'rat', label: `RAT (${pct(input.ratRate)})`, amount: rat, type: 'earning', explanation: paysCpp ? 'Seguro de acidente de trabalho, pelo grau de risco' : regimeNote, legalBasis: 'Lei 8.212/1991, art. 22, II' },
-      { key: 'third-parties', label: `Terceiros (${pct(rules.employerCosts.thirdPartiesRate)})`, amount: thirdParties, type: 'earning', explanation: input.regime === 'standard' ? 'Sistema S, salário-educação e INCRA' : input.regime === 'simples' ? regimeNote : 'Não devido no Anexo IV' },
+      { key: 'salary', label: 'Salário bruto', amount: salary, type: 'earning', group: 'Composição do custo mensal', explanation: 'Valor informado' },
+      { key: 'thirteenth', label: '13º salário (provisão mensal)', amount: thirteenthProvision, type: 'earning', group: 'Composição do custo mensal', explanation: '1/12 do salário' },
+      { key: 'vacation', label: 'Férias + 1/3 (provisão mensal)', amount: vacationProvision, type: 'earning', group: 'Composição do custo mensal', explanation: '1/12 do salário + 1/3' },
+      { key: 'fgts', label: `FGTS (${pct(rules.fgts.monthlyRate)})`, amount: fgts, type: 'earning', group: 'Composição do custo mensal', explanation: 'Sobre salário, 13º e férias', legalBasis: 'Lei 8.036/1990' },
+      { key: 'cpp', label: `INSS patronal (${pct(rules.employerCosts.socialSecurityRate)})`, amount: cpp, type: 'earning', group: 'Composição do custo mensal', explanation: paysCpp ? 'Sobre salário, 13º e férias' : regimeNote, legalBasis: 'Lei 8.212/1991, art. 22, I' },
+      { key: 'rat', label: `RAT (${pct(input.ratRate)})`, amount: rat, type: 'earning', group: 'Composição do custo mensal', explanation: paysCpp ? 'Seguro de acidente de trabalho, pelo grau de risco' : regimeNote, legalBasis: 'Lei 8.212/1991, art. 22, II' },
+      { key: 'third-parties', label: `Terceiros (${pct(rules.employerCosts.thirdPartiesRate)})`, amount: thirdParties, type: 'earning', group: 'Composição do custo mensal', explanation: input.regime === 'standard' ? 'Sistema S, salário-educação e INCRA' : input.regime === 'simples' ? regimeNote : 'Não devido no Anexo IV' },
       ...(benefits > 0
-        ? [{ key: 'benefits', label: 'Benefícios', amount: benefits, type: 'earning' as const, explanation: 'VR, VA, plano de saúde etc.' }]
+        ? [{ key: 'benefits', label: 'Benefícios', amount: benefits, type: 'earning' as const, group: 'Composição do custo mensal', explanation: 'VR, VA, plano de saúde etc.' }]
         : []),
       ...(transportVoucher > 0
-        ? [{ key: 'vt', label: 'Vale-transporte (parte da empresa)', amount: transportVoucher, type: 'earning' as const, explanation: `Custo das passagens acima de ${pct(rules.salary.transportVoucherMaxRate)} do salário` }]
+        ? [{ key: 'vt', label: 'Vale-transporte (parte da empresa)', amount: transportVoucher, type: 'earning' as const, group: 'Composição do custo mensal', explanation: `Custo das passagens acima de ${pct(rules.salary.transportVoucherMaxRate)} do salário` }]
         : []),
       { key: 'annual', label: 'Custo anual', amount: multiply(monthlyTotal, 12), type: 'info', explanation: `${formatDecimal(multiplier, 2)} vezes o salário bruto` },
     ],

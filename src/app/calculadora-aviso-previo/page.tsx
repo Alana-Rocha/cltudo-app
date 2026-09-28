@@ -21,12 +21,12 @@ export default function NoticePage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold">Calculadora de Aviso Prévio</h1>
-      <p className="mt-2 text-gray-600">
+      <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Calculadora de Aviso Prévio</h1>
+      <p className="mt-3 max-w-3xl text-base text-gray-600 sm:text-lg">
         Informe as datas de admissão e desligamento para saber quantos dias de aviso prévio são
         devidos.
       </p>
-      <div className="mt-6">
+      <div className="mt-8">
         <NoticeCalculator />
       </div>
       <WorkedExamples examples={examples} />

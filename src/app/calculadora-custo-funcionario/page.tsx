@@ -28,12 +28,12 @@ export default function EmployerCostPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold">Calculadora de Custo do Funcionário</h1>
-      <p className="mt-2 text-gray-600">
+      <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Calculadora de Custo do Funcionário</h1>
+      <p className="mt-3 max-w-3xl text-base text-gray-600 sm:text-lg">
         Informe o salário e o regime tributário da empresa para ver o custo mensal e anual de um
         funcionário CLT, com provisão de 13º e férias e todos os encargos.
       </p>
-      <div className="mt-6">
+      <div className="mt-8">
         <EmployerCostCalculator />
       </div>
       <WorkedExamples examples={examples} />

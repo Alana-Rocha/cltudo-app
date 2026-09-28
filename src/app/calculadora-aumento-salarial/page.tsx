@@ -28,12 +28,12 @@ export default function RaisePage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold">Simulador de Aumento Salarial</h1>
-      <p className="mt-2 text-gray-600">
+      <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Simulador de Aumento Salarial</h1>
+      <p className="mt-3 max-w-3xl text-base text-gray-600 sm:text-lg">
         Informe o salário atual e o aumento para ver quanto dele chega de fato ao seu bolso, depois
         do INSS e do Imposto de Renda.
       </p>
-      <div className="mt-6">
+      <div className="mt-8">
         <RaiseCalculator />
       </div>
       <WorkedExamples examples={examples} />

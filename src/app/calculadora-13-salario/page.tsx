@@ -22,12 +22,12 @@ export default function ThirteenthPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold">Calculadora de 13º Salário</h1>
-      <p className="mt-2 text-gray-600">
+      <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Calculadora de 13º Salário</h1>
+      <p className="mt-3 max-w-3xl text-base text-gray-600 sm:text-lg">
         Informe o salário bruto e os meses trabalhados no ano para ver o valor da 1ª e da 2ª
         parcela do 13º.
       </p>
-      <div className="mt-6">
+      <div className="mt-8">
         <ThirteenthCalculator />
       </div>
       <WorkedExamples examples={examples} />

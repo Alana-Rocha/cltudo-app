@@ -45,8 +45,8 @@ export function OvertimeCalculator() {
   const { result, error, handleSubmit, resultRef } = useLiveCalculation(compute());
 
   return (
-    <div>
-      <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border bg-white p-6">
+    <div className="calc-layout">
+      <form onSubmit={handleSubmit} className="card space-y-4 p-6">
         <CurrencyInput id="gross" label="Salário bruto" value={gross} onChange={setGross} required error={error} />
         <NumberInput id="monthlyHours" label="Jornada mensal (horas)" value={monthlyHours} onChange={setMonthlyHours} min={1} hint="Padrão: 220h" />
         <div className="grid grid-cols-2 gap-4">
@@ -61,7 +61,7 @@ export function OvertimeCalculator() {
           Calcular
         </button>
       </form>
-      <div ref={resultRef} className="scroll-mt-20">
+      <div ref={resultRef} className="calc-result scroll-mt-20">
         {result && <CalculationBreakdown result={result} headline={{ label: 'Horas extras + DSR' }} />}
       </div>
       <Disclaimer />

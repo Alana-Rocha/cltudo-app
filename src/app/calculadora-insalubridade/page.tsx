@@ -20,12 +20,12 @@ export default function UnhealthinessPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold">Calculadora de Insalubridade</h1>
-      <p className="mt-2 text-gray-600">
+      <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Calculadora de Insalubridade</h1>
+      <p className="mt-3 max-w-3xl text-base text-gray-600 sm:text-lg">
         Escolha o grau de insalubridade para ver o valor do adicional, calculado por padrão sobre
         o salário mínimo.
       </p>
-      <div className="mt-6">
+      <div className="mt-8">
         <UnhealthinessCalculator />
       </div>
       <WorkedExamples examples={examples} />

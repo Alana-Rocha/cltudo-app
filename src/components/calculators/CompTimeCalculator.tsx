@@ -33,8 +33,8 @@ export function CompTimeCalculator() {
   const { result, error, handleSubmit, resultRef } = useLiveCalculation(compute());
 
   return (
-    <div>
-      <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border bg-white p-6">
+    <div className="calc-layout">
+      <form onSubmit={handleSubmit} className="card space-y-4 p-6">
         <CurrencyInput id="salary" label="Salário bruto" value={salary} onChange={setSalary} required error={error} />
         <NumberInput id="monthlyHours" label="Jornada mensal (horas)" value={monthlyHours} onChange={setMonthlyHours} min={1} />
         <NumberInput id="balance" label="Saldo de horas (negativo se você deve horas)" value={balance} onChange={setBalance} />
@@ -42,7 +42,7 @@ export function CompTimeCalculator() {
           Calcular
         </button>
       </form>
-      <div ref={resultRef} className="scroll-mt-20">
+      <div ref={resultRef} className="calc-result scroll-mt-20">
         {result && <CalculationBreakdown result={result} headline={{ label: 'Valor a receber pelo banco de horas' }} />}
       </div>
       <Disclaimer />

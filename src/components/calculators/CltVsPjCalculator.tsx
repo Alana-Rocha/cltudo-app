@@ -64,8 +64,8 @@ export function CltVsPjCalculator() {
   const pjWins = (result?.totals.net ?? 0) > 0;
 
   return (
-    <div>
-      <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border bg-white p-6">
+    <div className="calc-layout">
+      <form onSubmit={handleSubmit} className="card space-y-4 p-6">
         <fieldset className="space-y-4">
           <legend className="text-sm font-semibold">Proposta CLT</legend>
           <CurrencyInput id="cltGross" label="Salário bruto mensal" value={cltGross} onChange={setCltGross} required error={errorFor('cltGross')} />
@@ -96,7 +96,7 @@ export function CltVsPjCalculator() {
           Comparar
         </button>
       </form>
-      <div ref={resultRef} className="scroll-mt-20">
+      <div ref={resultRef} className="calc-result scroll-mt-20">
         {result && (
           <CalculationBreakdown
             result={result}

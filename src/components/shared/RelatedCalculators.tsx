@@ -20,12 +20,12 @@ export function RelatedCalculators() {
       <h2 id="related-title" className="text-lg font-semibold">
         Calculadoras relacionadas
       </h2>
-      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+      <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {related.map((calc) => (
           <Link
             key={calc.slug}
             href={`/${calc.slug}`}
-            className="group flex items-center gap-3 rounded-lg border bg-white p-4 transition hover:border-brand-500"
+            className="card group flex items-center gap-3 p-4 transition hover:border-brand-500"
           >
             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-brand-50 text-brand-700 transition group-hover:bg-brand-100">
               <CalculatorIcon name={calc.icon} className="h-4 w-4" />

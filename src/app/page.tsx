@@ -1,14 +1,15 @@
 import { CalculatorDirectory } from '@/components/shared/CalculatorDirectory';
+import { getRulesFor } from '@/rules';
+
+function rulesLabel(effectiveFrom: string): string {
+  const [year, month] = effectiveFrom.split('-').map(Number);
+  return new Date(Date.UTC(year ?? 2026, (month ?? 1) - 1, 1)).toLocaleDateString('pt-BR', {
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'UTC',
+  });
+}
 
 export default function HomePage() {
-  return (
-    <div>
-      <h1 className="text-3xl font-bold">Calculadora Trabalhista</h1>
-      <p className="mt-2 text-gray-600">
-        Calcule salário, rescisão, férias, 13º, FGTS e outros valores trabalhistas de forma simples
-        — gratuito e sem cadastro.
-      </p>
-      <CalculatorDirectory />
-    </div>
-  );
+  return <CalculatorDirectory rulesLabel={rulesLabel(getRulesFor(new Date()).effectiveFrom)} />;
 }

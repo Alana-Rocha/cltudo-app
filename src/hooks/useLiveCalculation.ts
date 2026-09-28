@@ -27,7 +27,11 @@ export function useLiveCalculation(outcome: CalculationResult | string | FieldEr
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSubmitted(true);
-    if (result) resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const el = resultRef.current;
+    // Side by side (desktop) the result is usually already on screen.
+    if (result && el && el.getBoundingClientRect().top > window.innerHeight * 0.5) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   }
 
   return { result, error, errorFor, handleSubmit, resultRef };

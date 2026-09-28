@@ -21,12 +21,12 @@ export default function CompTimePage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold">Calculadora de Banco de Horas</h1>
-      <p className="mt-2 text-gray-600">
+      <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Calculadora de Banco de Horas</h1>
+      <p className="mt-3 max-w-3xl text-base text-gray-600 sm:text-lg">
         Informe seu saldo de horas para ver quanto valeria se fosse pago em dinheiro, como hora
         extra.
       </p>
-      <div className="mt-6">
+      <div className="mt-8">
         <CompTimeCalculator />
       </div>
       <WorkedExamples examples={examples} />

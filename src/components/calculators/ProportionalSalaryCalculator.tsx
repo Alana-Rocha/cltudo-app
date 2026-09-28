@@ -32,8 +32,8 @@ export function ProportionalSalaryCalculator() {
   const { result, error, handleSubmit, resultRef } = useLiveCalculation(compute());
 
   return (
-    <div>
-      <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border bg-white p-6">
+    <div className="calc-layout">
+      <form onSubmit={handleSubmit} className="card space-y-4 p-6">
         <CurrencyInput id="salary" label="Salário mensal integral" value={salary} onChange={setSalary} required error={error} />
         <NumberInput id="daysWorked" label="Dias trabalhados no mês" value={daysWorked} onChange={setDaysWorked} min={1} max={30} />
         <NumberInput id="dependents" label="Número de dependentes" value={dependents} onChange={setDependents} min={0} />
@@ -41,7 +41,7 @@ export function ProportionalSalaryCalculator() {
           Calcular
         </button>
       </form>
-      <div ref={resultRef} className="scroll-mt-20">
+      <div ref={resultRef} className="calc-result scroll-mt-20">
         {result && <CalculationBreakdown result={result} headline={{ label: 'Salário proporcional líquido' }} />}
       </div>
       <Disclaimer />

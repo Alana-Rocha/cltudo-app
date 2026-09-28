@@ -36,8 +36,8 @@ export function UnemploymentInsuranceCalculator() {
   const { result, error, handleSubmit, resultRef } = useLiveCalculation(compute());
 
   return (
-    <div>
-      <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border bg-white p-6">
+    <div className="calc-layout">
+      <form onSubmit={handleSubmit} className="card space-y-4 p-6">
         <div className="grid grid-cols-3 gap-4">
           <CurrencyInput id="s1" label="Salário 1" value={s1} onChange={setS1} required error={error} />
           <CurrencyInput id="s2" label="Salário 2" value={s2} onChange={setS2} />
@@ -58,7 +58,7 @@ export function UnemploymentInsuranceCalculator() {
           Calcular
         </button>
       </form>
-      <div ref={resultRef} className="scroll-mt-20">
+      <div ref={resultRef} className="calc-result scroll-mt-20">
         {result && <CalculationBreakdown result={result} headline={{ label: 'Total do seguro-desemprego' }} />}
       </div>
       <Disclaimer />

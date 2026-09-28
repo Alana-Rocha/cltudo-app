@@ -21,12 +21,12 @@ export default function HazardPayPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold">Calculadora de Periculosidade</h1>
-      <p className="mt-2 text-gray-600">
+      <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Calculadora de Periculosidade</h1>
+      <p className="mt-3 max-w-3xl text-base text-gray-600 sm:text-lg">
         Informe o salário base (sem gratificações) para ver o valor do adicional de
         periculosidade.
       </p>
-      <div className="mt-6">
+      <div className="mt-8">
         <HazardPayCalculator />
       </div>
       <WorkedExamples examples={examples} />
