@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
 import { usePersistedState } from '@/hooks/usePersistedState';
+import { useLiveCalculation } from '@/hooks/useLiveCalculation';
 import { CurrencyInput } from '@/components/ui/CurrencyInput';
 import { NumberInput } from '@/components/ui/NumberInput';
 import { CalculationBreakdown } from '@/components/shared/CalculationBreakdown';
@@ -22,29 +22,24 @@ export function UnemploymentInsuranceCalculator() {
   const [s3, setS3] = usePersistedState('calculadora-seguro-desemprego:s3', '');
   const [requestNumber, setRequestNumber] = usePersistedState('calculadora-seguro-desemprego:requestNumber', '1');
   const [monthsWorked, setMonthsWorked] = usePersistedState('calculadora-seguro-desemprego:monthsWorked', '12');
-  const [result, setResult] = useState<CalculationResult | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  function compute(): CalculationResult | string {
     const c1 = toCents(parseBrNumber(s1));
     const c2 = toCents(parseBrNumber(s2));
     const c3 = toCents(parseBrNumber(s3));
-    if (c1 <= 0 || c2 <= 0 || c3 <= 0) return setError('Informe os 3 últimos salários, todos maiores que zero.');
-    setError(null);
-    setResult(
-      calculateUnemploymentInsurance(
-        { lastThreeSalaries: [c1, c2, c3], requestNumber: Number(requestNumber) || 1, monthsWorkedInPeriod: Number(monthsWorked) || 0 },
-        getRulesFor(new Date())
-      )
+    if (c1 <= 0 || c2 <= 0 || c3 <= 0) return 'Informe os 3 últimos salários, todos maiores que zero.';
+    return calculateUnemploymentInsurance(
+      { lastThreeSalaries: [c1, c2, c3], requestNumber: Number(requestNumber) || 1, monthsWorkedInPeriod: Number(monthsWorked) || 0 },
+      getRulesFor(new Date())
     );
   }
+
+  const { result, error, handleSubmit, resultRef } = useLiveCalculation(compute());
 
   return (
     <div>
       <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border bg-white p-6">
         <div className="grid grid-cols-3 gap-4">
-          <CurrencyInput id="s1" label="Salário 1" value={s1} onChange={setS1} required error={error ?? undefined} />
+          <CurrencyInput id="s1" label="Salário 1" value={s1} onChange={setS1} required error={error} />
           <CurrencyInput id="s2" label="Salário 2" value={s2} onChange={setS2} />
           <CurrencyInput id="s3" label="Salário 3" value={s3} onChange={setS3} />
         </div>
@@ -63,7 +58,9 @@ export function UnemploymentInsuranceCalculator() {
           Calcular
         </button>
       </form>
-      {result && <CalculationBreakdown result={result} />}
+      <div ref={resultRef} className="scroll-mt-20">
+        {result && <CalculationBreakdown result={result} headline={{ label: 'Total do seguro-desemprego' }} />}
+      </div>
       <Disclaimer />
     </div>
   );

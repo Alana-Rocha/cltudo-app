@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
 import { usePersistedState } from '@/hooks/usePersistedState';
+import { useLiveCalculation } from '@/hooks/useLiveCalculation';
 import { CurrencyInput } from '@/components/ui/CurrencyInput';
 import { NumberInput } from '@/components/ui/NumberInput';
 import { CalculationBreakdown } from '@/components/shared/CalculationBreakdown';
@@ -31,40 +31,36 @@ export function FgtsCalculator() {
   const [terminationType, setTerminationType] = usePersistedState<TerminationType>('calculadora-fgts:terminationType', 'without_cause');
   const [months, setMonths] = usePersistedState('calculadora-fgts:months', '12');
   const [actualBalance, setActualBalance] = usePersistedState('calculadora-fgts:actualBalance', '');
-  const [result, setResult] = useState<CalculationResult | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  function compute(): CalculationResult | string {
     const salaryCents = toCents(parseBrNumber(salary));
-    if (salaryCents <= 0) return setError('Informe um salário maior que zero.');
-    setError(null);
+    if (salaryCents <= 0) return 'Informe um salário maior que zero.';
     const rules = getRulesFor(new Date());
-    setResult(
-      calculateFgtsStandalone(
-        {
-          grossSalary: salaryCents,
-          rescission: showRescission
-            ? {
-                terminationType,
-                monthsEmployed: Number(months) || 1,
-                thirteenthAmount: salaryCents, // aproximação: 13º integral = 1 salário
-                vacationTakenAmount: 0,
-                noticeIndemnifiedAmount: 0,
-                balanceAmount: 0,
-                actualBalance: actualBalance ? toCents(parseBrNumber(actualBalance)) : undefined,
-              }
-            : undefined,
-        },
-        rules
-      )
+    return calculateFgtsStandalone(
+      {
+        grossSalary: salaryCents,
+        rescission: showRescission
+          ? {
+              terminationType,
+              monthsEmployed: Number(months) || 1,
+              thirteenthAmount: salaryCents, // aproximação: 13º integral = 1 salário
+              vacationTakenAmount: 0,
+              noticeIndemnifiedAmount: 0,
+              balanceAmount: 0,
+              actualBalance: actualBalance ? toCents(parseBrNumber(actualBalance)) : undefined,
+            }
+          : undefined,
+      },
+      rules
     );
   }
+
+  const { result, error, handleSubmit, resultRef } = useLiveCalculation(compute());
 
   return (
     <div>
       <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border bg-white p-6">
-        <CurrencyInput id="salary" label="Salário bruto" value={salary} onChange={setSalary} required error={error ?? undefined} />
+        <CurrencyInput id="salary" label="Salário bruto" value={salary} onChange={setSalary} required error={error} />
 
         <label className="flex items-center gap-2 text-sm">
           <input type="checkbox" checked={showRescission} onChange={(e) => setShowRescission(e.target.checked)} />
@@ -94,7 +90,9 @@ export function FgtsCalculator() {
           Calcular
         </button>
       </form>
-      {result && <CalculationBreakdown result={result} />}
+      <div ref={resultRef} className="scroll-mt-20">
+        {result && <CalculationBreakdown result={result} headline={{ label: 'Depósito mensal do FGTS' }} />}
+      </div>
       <Disclaimer />
     </div>
   );

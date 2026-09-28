@@ -58,5 +58,13 @@ export function getRulesFor(date: Date, ruleSets: RuleSet[] = fallbackRuleSets):
   return chosen;
 }
 
+export function earliestRulesDate(ruleSets: RuleSet[] = fallbackRuleSets): Date {
+  return new Date(ruleSets.map((r) => r.effectiveFrom).sort()[0]!);
+}
+
+export function hasRulesFor(date: Date, ruleSets: RuleSet[] = fallbackRuleSets): boolean {
+  return date.getTime() >= earliestRulesDate(ruleSets).getTime();
+}
+
 export type { RuleSet } from './schema';
 export { fallbackRuleSets };

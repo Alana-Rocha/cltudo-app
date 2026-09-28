@@ -1,6 +1,7 @@
 import type { RuleSet } from '@/rules/schema';
 import { divide, multiply, type Cents } from '@/lib/money';
 import type { CalculationResult } from './types';
+import { formatDecimal } from '@/lib/format';
 
 export type DsrInput = {
   variableAmount: Cents; // comissões, horas extras, etc. recebidas no mês
@@ -23,10 +24,10 @@ export function calculateDsr(input: DsrInput, rules: RuleSet): CalculationResult
   return {
     items: [
       { key: 'variable', label: 'Remuneração variável no mês', amount: input.variableAmount, type: 'earning', explanation: 'Valor informado' },
-      { key: 'dsr', label: 'DSR sobre a remuneração variável', amount: dsr, type: 'earning', explanation: `(${(input.variableAmount / 100).toFixed(2)} ÷ ${input.workingDaysInMonth}) × ${input.sundaysAndHolidaysInMonth}`, legalBasis: 'Lei 605/1949' },
+      { key: 'dsr', label: 'DSR sobre a remuneração variável', amount: dsr, type: 'earning', explanation: `(${formatDecimal(input.variableAmount / 100, 2)} ÷ ${input.workingDaysInMonth}) × ${input.sundaysAndHolidaysInMonth}`, legalBasis: 'Lei 605/1949' },
     ],
     totals: { gross: input.variableAmount + dsr, deductions: 0, net: input.variableAmount + dsr },
-    steps: [{ label: 'DSR', formula: `(${(input.variableAmount / 100).toFixed(2)} ÷ ${input.workingDaysInMonth}) × ${input.sundaysAndHolidaysInMonth}`, value: dsr }],
+    steps: [{ label: 'DSR', formula: `(${formatDecimal(input.variableAmount / 100, 2)} ÷ ${input.workingDaysInMonth}) × ${input.sundaysAndHolidaysInMonth}`, value: dsr }],
     included: [],
     excluded: [],
     warnings: [],

@@ -6,6 +6,7 @@ import { calculateIrrf } from './irrf';
 import { calculateNotice, type NoticeReason } from './notice';
 import { calculateFgtsFine, type TerminationType } from './fgts';
 import type { CalculationResult } from './types';
+import { formatDecimal, formatPercent } from '@/lib/format';
 
 export type NoticeMode = 'worked' | 'indemnified' | 'waived_by_employer' | 'not_fulfilled_by_employee';
 
@@ -56,9 +57,19 @@ export function calculateTermination(input: TerminationInput, rules: RuleSet): C
   const excluded: string[] = [];
   const warnings: string[] = [];
 
+  // Horas extras e adicionais habituais integram aviso indenizado, 13º e
+  // férias (CLT art. 487 §5º, art. 142 §5º); o saldo de salário não, pois os
+  // variáveis do último mês são pagos à parte.
+  const averageVariables = input.averageVariables ?? 0;
+  const remunerationBase = add(input.grossSalary, averageVariables);
+  if (averageVariables > 0) {
+    included.push(
+      `Média de variáveis habituais (${formatDecimal(averageVariables / 100, 2)}) incluída no aviso indenizado, 13º, férias e FGTS.`
+    );
+  }
+
   // 1) Saldo de salário — always due.
-  const dailyRate = divide(input.grossSalary, 30);
-  const balanceAmount = multiply(dailyRate, input.daysWorkedInLastMonth);
+  const balanceAmount = multiply(divide(input.grossSalary, 30), input.daysWorkedInLastMonth);
   included.push('Saldo de salário: devido em todo tipo de desligamento.');
 
   // 2) Aviso prévio.
@@ -71,7 +82,7 @@ export function calculateTermination(input: TerminationInput, rules: RuleSet): C
   const noticeRule = NOTICE_DUE[input.terminationType];
   if (noticeRule !== false && input.noticeMode === 'indemnified') {
     const fraction = noticeRule === 0.5 ? 0.5 : 1;
-    noticeAmount = multiply(input.grossSalary, (notice.days / 30) * fraction);
+    noticeAmount = multiply(remunerationBase, (notice.days / 30) * fraction);
     projectedDate = notice.projectedEndDate;
     included.push(
       `Aviso prévio indenizado (${notice.days} dias${fraction === 0.5 ? ', 50% por acordo (art. 484-A)' : ''}): projeta o contrato até ${projectedDate.toISOString().slice(0, 10)} para fins de avos.`
@@ -88,9 +99,8 @@ export function calculateTermination(input: TerminationInput, rules: RuleSet): C
   // 3) 13º proporcional (sobre o ano de saída, usando a data projetada).
   const yearStart = new Date(Date.UTC(projectedDate.getUTCFullYear(), 0, 1));
   const thirteenthAvos = countAvos(yearStart, projectedDate, rules.thirteenth.minDaysForMonth);
-  const monthlyBase = add(input.grossSalary, input.averageVariables ?? 0);
   const thirteenthAmount = THIRTEENTH_DUE[input.terminationType]
-    ? divide(multiply(monthlyBase, thirteenthAvos), 12)
+    ? divide(multiply(remunerationBase, thirteenthAvos), 12)
     : 0;
   if (THIRTEENTH_DUE[input.terminationType]) {
     included.push(`13º proporcional: ${thirteenthAvos}/12 avos.`);
@@ -105,7 +115,7 @@ export function calculateTermination(input: TerminationInput, rules: RuleSet): C
     rules.vacation.minDaysForMonth
   );
   const vacationProportionalAvos = acquisitivePeriodAvos % 12 || (acquisitivePeriodAvos > 0 ? 12 : 0);
-  const vacationBase = divide(multiply(input.grossSalary, vacationProportionalAvos), 12);
+  const vacationBase = divide(multiply(remunerationBase, vacationProportionalAvos), 12);
   const vacationBonus = multiply(vacationBase, rules.vacation.bonusFraction);
   const vacationTotal = add(vacationBase, vacationBonus);
   included.push('Férias proporcionais + 1/3: devidas em todo tipo de desligamento, inclusive justa causa.');
@@ -114,7 +124,7 @@ export function calculateTermination(input: TerminationInput, rules: RuleSet): C
   const expiredVacationDays = Math.min(30, Math.max(0, input.expiredVacationDays ?? 0));
   let expiredVacationTotal: Cents = 0;
   if (expiredVacationDays > 0) {
-    const expiredBase = multiply(dailyRate, expiredVacationDays);
+    const expiredBase = multiply(divide(remunerationBase, 30), expiredVacationDays);
     const expiredBonus = multiply(expiredBase, rules.vacation.bonusFraction);
     expiredVacationTotal = add(expiredBase, expiredBonus);
     if (input.expiredVacationDoubled) expiredVacationTotal = multiply(expiredVacationTotal, 2);
@@ -143,7 +153,7 @@ export function calculateTermination(input: TerminationInput, rules: RuleSet): C
     {
       terminationType: input.terminationType,
       actualBalance: input.actualFgtsBalance,
-      grossSalary: input.grossSalary,
+      grossSalary: remunerationBase,
       monthsEmployed: Math.max(
         1,
         Math.round(
@@ -161,12 +171,12 @@ export function calculateTermination(input: TerminationInput, rules: RuleSet): C
 
   const withdrawalRate = FGTS_WITHDRAWAL_RATE[input.terminationType];
   if (withdrawalRate > 0) {
-    included.push(`Saque do FGTS: ${(withdrawalRate * 100).toFixed(0)}% do saldo.`);
+    included.push(`Saque do FGTS: ${formatPercent(withdrawalRate, 0)} do saldo.`);
   } else {
     excluded.push('Saque do FGTS: não autorizado neste tipo de desligamento (fica depositado).');
   }
   if (fgts.fineRate > 0) {
-    included.push(`Multa do FGTS: ${(fgts.fineRate * 100).toFixed(0)}% sobre o saldo.`);
+    included.push(`Multa do FGTS: ${formatPercent(fgts.fineRate, 0)} sobre o saldo.`);
   } else {
     excluded.push('Multa do FGTS: não devida neste tipo de desligamento.');
   }
@@ -177,7 +187,7 @@ export function calculateTermination(input: TerminationInput, rules: RuleSet): C
 
   return {
     items: [
-      { key: 'balance', label: 'Saldo de salário', amount: balanceAmount, type: 'earning', explanation: `${(input.grossSalary / 100).toFixed(2)} ÷ 30 × ${input.daysWorkedInLastMonth} dias` },
+      { key: 'balance', label: 'Saldo de salário', amount: balanceAmount, type: 'earning', explanation: `${formatDecimal(input.grossSalary / 100, 2)} ÷ 30 × ${input.daysWorkedInLastMonth} dias` },
       ...(noticeAmount !== 0
         ? [{ key: 'notice', label: noticeAmount > 0 ? 'Aviso prévio indenizado' : 'Desconto de aviso prévio não cumprido', amount: noticeAmount, type: (noticeAmount > 0 ? ('earning' as const) : ('deduction' as const)), explanation: `${notice.days} dias` }]
         : []),
@@ -185,14 +195,14 @@ export function calculateTermination(input: TerminationInput, rules: RuleSet): C
       { key: 'vacation', label: 'Férias proporcionais', amount: vacationBase, type: 'earning', explanation: `${vacationProportionalAvos}/12 avos` },
       { key: 'vacation-bonus', label: '1/3 sobre férias proporcionais', amount: vacationBonus, type: 'earning', explanation: '1/3 constitucional' },
       ...(expiredVacationTotal > 0
-        ? [{ key: 'vacation-expired', label: `Férias vencidas (${expiredVacationDays} dias)${input.expiredVacationDoubled ? ', em dobro' : ''}`, amount: expiredVacationTotal, type: 'earning' as const, explanation: `${(input.grossSalary / 100).toFixed(2)} ÷ 30 × ${expiredVacationDays} + 1/3${input.expiredVacationDoubled ? ', × 2' : ''}`, legalBasis: 'CLT art. 137' }]
+        ? [{ key: 'vacation-expired', label: `Férias vencidas (${expiredVacationDays} dias)${input.expiredVacationDoubled ? ', em dobro' : ''}`, amount: expiredVacationTotal, type: 'earning' as const, explanation: `${formatDecimal(remunerationBase / 100, 2)} ÷ 30 × ${expiredVacationDays} + 1/3${input.expiredVacationDoubled ? ', × 2' : ''}`, legalBasis: 'CLT art. 137' }]
         : []),
       { key: 'inss-balance', label: 'INSS sobre saldo de salário', amount: inssOnBalance.total, type: 'deduction', explanation: 'Sobre o saldo de salário' },
       { key: 'irrf-balance', label: 'IRRF sobre saldo de salário', amount: irrfOnBalance.total, type: 'deduction', explanation: 'Sobre o saldo de salário' },
       { key: 'inss-13', label: 'INSS sobre o 13º', amount: inssOnThirteenth.total, type: 'deduction', explanation: 'Sobre o 13º proporcional, separado do saldo' },
       { key: 'irrf-13', label: 'IRRF sobre o 13º', amount: irrfOnThirteenth.total, type: 'deduction', explanation: 'Sobre o 13º proporcional, separado do saldo' },
       ...(fgts.fine > 0
-        ? [{ key: 'fgts-fine', label: `Multa do FGTS (${(fgts.fineRate * 100).toFixed(0)}%)`, amount: fgts.fine, type: 'earning' as const, explanation: fgts.usedEstimate ? 'Sobre saldo estimado do FGTS' : 'Sobre saldo informado do FGTS' }]
+        ? [{ key: 'fgts-fine', label: `Multa do FGTS (${formatPercent(fgts.fineRate, 0)})`, amount: fgts.fine, type: 'earning' as const, explanation: fgts.usedEstimate ? 'Sobre saldo estimado do FGTS' : 'Sobre saldo informado do FGTS' }]
         : []),
     ],
     totals: { gross: grossTotal, deductions, net },

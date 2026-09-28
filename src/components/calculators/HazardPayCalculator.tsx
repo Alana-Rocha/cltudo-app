@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
 import { usePersistedState } from '@/hooks/usePersistedState';
+import { useLiveCalculation } from '@/hooks/useLiveCalculation';
 import { CurrencyInput } from '@/components/ui/CurrencyInput';
 import { CalculationBreakdown } from '@/components/shared/CalculationBreakdown';
 import { Disclaimer } from '@/components/shared/Disclaimer';
@@ -17,26 +17,26 @@ function parseBrNumber(input: string): number {
 
 export function HazardPayCalculator() {
   const [salary, setSalary] = usePersistedState('calculadora-periculosidade:salary', '');
-  const [result, setResult] = useState<CalculationResult | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  function compute(): CalculationResult | string {
     const cents = toCents(parseBrNumber(salary));
-    if (cents <= 0) return setError('Informe um salário base maior que zero.');
-    setError(null);
-    setResult(calculateHazardPay({ baseSalary: cents }, getRulesFor(new Date())));
+    if (cents <= 0) return 'Informe um salário base maior que zero.';
+    return calculateHazardPay({ baseSalary: cents }, getRulesFor(new Date()));
   }
+
+  const { result, error, handleSubmit, resultRef } = useLiveCalculation(compute());
 
   return (
     <div>
       <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border bg-white p-6">
-        <CurrencyInput id="salary" label="Salário base (sem gratificações)" value={salary} onChange={setSalary} required error={error ?? undefined} />
+        <CurrencyInput id="salary" label="Salário base (sem gratificações)" value={salary} onChange={setSalary} required error={error} />
         <button type="submit" className="w-full rounded-md bg-brand-600 py-2 font-medium text-white hover:bg-brand-700">
           Calcular
         </button>
       </form>
-      {result && <CalculationBreakdown result={result} />}
+      <div ref={resultRef} className="scroll-mt-20">
+        {result && <CalculationBreakdown result={result} headline={{ label: 'Adicional de periculosidade (mensal)' }} />}
+      </div>
       <Disclaimer />
     </div>
   );

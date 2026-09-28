@@ -1,6 +1,7 @@
 import type { RuleSet } from '@/rules/schema';
 import { divide, multiply, type Cents } from '@/lib/money';
 import type { CalculationResult } from './types';
+import { formatDecimal, formatPercent } from '@/lib/format';
 
 export type CompTimeInput = {
   grossSalary: Cents;
@@ -34,11 +35,11 @@ export function calculateCompTime(input: CompTimeInput, rules: RuleSet): Calcula
         explanation: `${Math.abs(input.balanceHours)}h`,
       },
       ...(isCredit
-        ? [{ key: 'payout', label: `Valor se pago como hora extra (${(payOutRate * 100).toFixed(0)}%)`, amount: payoutValue, type: 'earning' as const, explanation: `${(hourlyRate / 100).toFixed(2)} × (1 + ${(payOutRate * 100).toFixed(0)}%) × ${Math.abs(input.balanceHours)}h`, legalBasis: 'CLT art. 59, §2º' }]
+        ? [{ key: 'payout', label: `Valor se pago como hora extra (${formatPercent(payOutRate, 0)})`, amount: payoutValue, type: 'earning' as const, explanation: `${formatDecimal(hourlyRate / 100, 2)} × (1 + ${formatPercent(payOutRate, 0)}) × ${Math.abs(input.balanceHours)}h`, legalBasis: 'CLT art. 59, §2º' }]
         : []),
     ],
     totals: { gross: payoutValue, deductions: 0, net: payoutValue },
-    steps: [{ label: 'Valor-hora', formula: `${(input.grossSalary / 100).toFixed(2)} ÷ ${monthlyHours}h`, value: hourlyRate }],
+    steps: [{ label: 'Valor-hora', formula: `${formatDecimal(input.grossSalary / 100, 2)} ÷ ${monthlyHours}h`, value: hourlyRate }],
     included: [],
     excluded: [],
     warnings: isCredit

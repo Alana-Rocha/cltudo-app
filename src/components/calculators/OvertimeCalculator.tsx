@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
 import { usePersistedState } from '@/hooks/usePersistedState';
+import { useLiveCalculation } from '@/hooks/useLiveCalculation';
 import { CurrencyInput } from '@/components/ui/CurrencyInput';
 import { NumberInput } from '@/components/ui/NumberInput';
 import { CalculationBreakdown } from '@/components/shared/CalculationBreakdown';
@@ -23,36 +23,31 @@ export function OvertimeCalculator() {
   const [hours100, setHours100] = usePersistedState('calculadora-hora-extra:hours100', '0');
   const [workingDays, setWorkingDays] = usePersistedState('calculadora-hora-extra:workingDays', '22');
   const [sundaysHolidays, setSundaysHolidays] = usePersistedState('calculadora-hora-extra:sundaysHolidays', '4');
-  const [result, setResult] = useState<CalculationResult | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  function compute(): CalculationResult | string {
     const grossCents = toCents(parseBrNumber(gross));
-    if (grossCents <= 0) return setError('Informe um salário bruto maior que zero.');
-    setError(null);
+    if (grossCents <= 0) return 'Informe um salário bruto maior que zero.';
     const rules = getRulesFor(new Date());
-    setResult(
-      calculateOvertime(
-        {
-          grossSalary: grossCents,
-          monthlyHours: Number(monthlyHours) || rules.overtime.defaultMonthlyHours,
-          lines: [
-            { hours: Number(hours50) || 0, rate: 0.5 },
-            { hours: Number(hours100) || 0, rate: 1.0 },
-          ].filter((l) => l.hours > 0),
-          workingDaysInMonth: Number(workingDays) || 22,
-          sundaysAndHolidaysInMonth: Number(sundaysHolidays) || 0,
-        },
-        rules
-      )
+    return calculateOvertime(
+      {
+        grossSalary: grossCents,
+        monthlyHours: Number(monthlyHours) || rules.overtime.defaultMonthlyHours,
+        lines: [
+          { hours: Number(hours50) || 0, rate: 0.5 },
+          { hours: Number(hours100) || 0, rate: 1.0 },
+        ].filter((l) => l.hours > 0),
+        workingDaysInMonth: Number(workingDays) || 22,
+        sundaysAndHolidaysInMonth: Number(sundaysHolidays) || 0,
+      },
+      rules
     );
   }
+
+  const { result, error, handleSubmit, resultRef } = useLiveCalculation(compute());
 
   return (
     <div>
       <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border bg-white p-6">
-        <CurrencyInput id="gross" label="Salário bruto" value={gross} onChange={setGross} required error={error ?? undefined} />
+        <CurrencyInput id="gross" label="Salário bruto" value={gross} onChange={setGross} required error={error} />
         <NumberInput id="monthlyHours" label="Jornada mensal (horas)" value={monthlyHours} onChange={setMonthlyHours} min={1} hint="Padrão: 220h" />
         <div className="grid grid-cols-2 gap-4">
           <NumberInput id="hours50" label="Horas extras a 50%" value={hours50} onChange={setHours50} min={0} />
@@ -66,7 +61,9 @@ export function OvertimeCalculator() {
           Calcular
         </button>
       </form>
-      {result && <CalculationBreakdown result={result} />}
+      <div ref={resultRef} className="scroll-mt-20">
+        {result && <CalculationBreakdown result={result} headline={{ label: 'Horas extras + DSR' }} />}
+      </div>
       <Disclaimer />
     </div>
   );

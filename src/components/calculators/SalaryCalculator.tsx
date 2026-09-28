@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
 import { usePersistedState } from '@/hooks/usePersistedState';
+import { useLiveCalculation } from '@/hooks/useLiveCalculation';
 import { CurrencyInput } from '@/components/ui/CurrencyInput';
 import { NumberInput } from '@/components/ui/NumberInput';
 import { CalculationBreakdown } from '@/components/shared/CalculationBreakdown';
+import { SalaryCompositionBar } from '@/components/shared/SalaryCompositionBar';
 import { Disclaimer } from '@/components/shared/Disclaimer';
 import { calculateSalary } from '@/engine/salary';
 import { getRulesFor } from '@/rules';
@@ -24,36 +25,36 @@ export function SalaryCalculator() {
   const [alimony, setAlimony] = usePersistedState('calculadora-salario-liquido:alimony', '');
   const [hasVt, setHasVt] = usePersistedState('calculadora-salario-liquido:hasVt', false);
   const [vtValue, setVtValue] = usePersistedState('calculadora-salario-liquido:vtValue', '');
-  const [result, setResult] = useState<CalculationResult | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [vtTrips, setVtTrips] = usePersistedState('calculadora-salario-liquido:vtTrips', '2');
+  const [vtDays, setVtDays] = usePersistedState('calculadora-salario-liquido:vtDays', '22');
+  const vtMonthlyTotal = (() => {
+    const price = parseBrNumber(vtValue);
+    const trips = Number(vtTrips) || 0;
+    const days = Number(vtDays) || 0;
+    return price * trips * days;
+  })();
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  function compute(): CalculationResult | string {
     const grossCents = toCents(parseBrNumber(gross));
-    if (grossCents <= 0) {
-      setError('Informe um salário bruto maior que zero.');
-      return;
-    }
-    setError(null);
-    const rules = getRulesFor(new Date());
-    setResult(
-      calculateSalary(
-        {
-          grossSalary: grossCents,
-          dependents: Number(dependents) || 0,
-          alimony: alimony ? toCents(parseBrNumber(alimony)) : undefined,
-          hasTransportVoucher: hasVt,
-          transportVoucherValue: vtValue ? toCents(parseBrNumber(vtValue)) : undefined,
-        },
-        rules
-      )
+    if (grossCents <= 0) return 'Informe um salário bruto maior que zero.';
+    return calculateSalary(
+      {
+        grossSalary: grossCents,
+        dependents: Number(dependents) || 0,
+        alimony: alimony ? toCents(parseBrNumber(alimony)) : undefined,
+        hasTransportVoucher: hasVt,
+        transportVoucherValue: vtMonthlyTotal > 0 ? toCents(vtMonthlyTotal) : undefined,
+      },
+      getRulesFor(new Date())
     );
   }
+
+  const { result, error, handleSubmit, resultRef } = useLiveCalculation(compute());
 
   return (
     <div>
       <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border bg-white p-6">
-        <CurrencyInput id="gross" label="Salário bruto" value={gross} onChange={setGross} required error={error ?? undefined} />
+        <CurrencyInput id="gross" label="Salário bruto" value={gross} onChange={setGross} required error={error} />
         <NumberInput id="dependents" label="Número de dependentes" value={dependents} onChange={setDependents} min={0} />
 
         <button
@@ -72,7 +73,18 @@ export function SalaryCalculator() {
               Recebo vale-transporte
             </label>
             {hasVt && (
-              <CurrencyInput id="vt" label="Valor da passagem (mensal)" value={vtValue} onChange={setVtValue} />
+              <div className="space-y-3">
+                <CurrencyInput id="vt" label="Valor da passagem (por trecho)" value={vtValue} onChange={setVtValue} />
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <NumberInput id="vtTrips" label="Viagens por dia" value={vtTrips} onChange={setVtTrips} min={1} max={10} />
+                  <NumberInput id="vtDays" label="Dias trabalhados no mês" value={vtDays} onChange={setVtDays} min={1} max={31} />
+                </div>
+                <p className="text-xs text-gray-400">
+                  {vtMonthlyTotal > 0
+                    ? `Total mensal estimado: R$ ${vtMonthlyTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (${vtTrips} viagens × ${vtDays} dias)`
+                    : 'Informe o valor da passagem para calcular o total mensal'}
+                </p>
+              </div>
             )}
           </div>
         )}
@@ -82,7 +94,15 @@ export function SalaryCalculator() {
         </button>
       </form>
 
-      {result && <CalculationBreakdown result={result} />}
+      <div ref={resultRef} className="scroll-mt-20">
+        {result && (
+          <CalculationBreakdown
+            result={result}
+            headline={{ label: 'Salário líquido' }}
+            summary={<SalaryCompositionBar result={result} />}
+          />
+        )}
+      </div>
       <Disclaimer />
     </div>
   );

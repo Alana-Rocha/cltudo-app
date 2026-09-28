@@ -1,13 +1,13 @@
 'use client';
 
-import { useState } from 'react';
 import { usePersistedState } from '@/hooks/usePersistedState';
+import { useLiveCalculation, type FieldError } from '@/hooks/useLiveCalculation';
 import { NumberInput } from '@/components/ui/NumberInput';
 import { DateInput } from '@/components/ui/DateInput';
 import { CalculationBreakdown } from '@/components/shared/CalculationBreakdown';
 import { Disclaimer } from '@/components/shared/Disclaimer';
 import { calculateNoticeStandalone } from '@/engine/notice';
-import { getRulesFor } from '@/rules';
+import { earliestRulesDate, getRulesFor, hasRulesFor } from '@/rules';
 import { parseBrDate } from '@/lib/dates';
 import type { CalculationResult } from '@/engine/types';
 
@@ -15,28 +15,26 @@ export function NoticeCalculator() {
   const [admissionDate, setAdmissionDate] = usePersistedState('calculadora-aviso-previo:admissionDate', '');
   const [referenceDate, setReferenceDate] = usePersistedState('calculadora-aviso-previo:referenceDate', '');
   const [reason, setReason] = usePersistedState<'without_cause' | 'employee_resignation'>('calculadora-aviso-previo:reason', 'without_cause');
-  const [result, setResult] = useState<CalculationResult | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  function compute(): CalculationResult | FieldError {
     const admission = parseBrDate(admissionDate);
     const reference = parseBrDate(referenceDate);
-    if (!admission) return setError('Informe a data de admissão no formato dd/mm/aaaa.');
-    if (!reference) return setError('Informe a data de referência no formato dd/mm/aaaa.');
+    if (!admission) return { field: 'admission', message: 'Informe a data de admissão no formato dd/mm/aaaa.' };
+    if (!reference) return { field: 'reference', message: 'Informe a data de desligamento no formato dd/mm/aaaa.' };
     if (reference.getTime() <= admission.getTime())
-      return setError('A data de referência deve ser depois da admissão.');
-    setError(null);
-    const rules = getRulesFor(reference);
-    setResult(calculateNoticeStandalone(admission, reference, reason, rules));
+      return { field: 'reference', message: 'A data de desligamento deve ser depois da admissão.' };
+    // Aviso prévio rules (Lei 12.506/2011) predate every rule set, so older dates can use the earliest one.
+    const rules = getRulesFor(hasRulesFor(reference) ? reference : earliestRulesDate());
+    return calculateNoticeStandalone(admission, reference, reason, rules);
   }
+
+  const { result, errorFor, handleSubmit, resultRef } = useLiveCalculation(compute());
 
   return (
     <div>
       <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border bg-white p-6">
         <div className="grid grid-cols-2 gap-4">
-          <DateInput id="admission" label="Data de admissão" value={admissionDate} onChange={setAdmissionDate} />
-          <DateInput id="reference" label="Data de desligamento" value={referenceDate} onChange={setReferenceDate} />
+          <DateInput id="admission" label="Data de admissão" value={admissionDate} onChange={setAdmissionDate} error={errorFor('admission')} />
+          <DateInput id="reference" label="Data de desligamento" value={referenceDate} onChange={setReferenceDate} error={errorFor('reference')} />
         </div>
         <div>
           <label htmlFor="reason" className="mb-1 block text-sm font-medium">
@@ -47,12 +45,13 @@ export function NoticeCalculator() {
             <option value="employee_resignation">Pedido de demissão</option>
           </select>
         </div>
-        {error && <p className="text-xs text-red-600">{error}</p>}
         <button type="submit" className="w-full rounded-md bg-brand-600 py-2 font-medium text-white hover:bg-brand-700">
           Calcular
         </button>
       </form>
-      {result && <CalculationBreakdown result={result} />}
+      <div ref={resultRef} className="scroll-mt-20">
+        {result && <CalculationBreakdown result={result} headline={{ label: 'Aviso prévio' }} />}
+      </div>
       <Disclaimer />
     </div>
   );

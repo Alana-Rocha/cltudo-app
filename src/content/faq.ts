@@ -247,6 +247,11 @@ const FAQ_BY_SLUG: Record<string, (rules: RuleSet) => FaqItem[]> = {
       question: 'O valor é igual para todas as categorias de trabalhadora?',
       answer: 'Não. Empregada CLT recebe a remuneração integral; outras categorias (doméstica, autônoma, MEI, segurada especial) têm regras de cálculo próprias.',
     },
+    {
+      question: 'Tem desconto de INSS e Imposto de Renda no salário-maternidade?',
+      answer:
+        'Hoje, sim: a folha desconta o INSS da empregada e o IRRF, que não está entre as isenções do Imposto de Renda. O STF já afastou a contribuição paga pela empresa (Tema 72), e a cobrança sobre a parte da empregada ainda está em julgamento (Tema 1274).',
+    },
   ],
   'calculadora-seguro-desemprego': (r) => [
     {

@@ -1,6 +1,7 @@
 import type { RuleSet } from '@/rules/schema';
 import { add, divide, multiply, type Cents } from '@/lib/money';
 import type { CalculationResult } from './types';
+import { formatDecimal, formatPercent } from '@/lib/format';
 
 export type OvertimeLine = { hours: number; rate: number }; // rate: 0.5, 1.0 or custom
 
@@ -24,10 +25,10 @@ export function calculateOvertime(input: OvertimeInput, rules: RuleSet): Calcula
     totalOvertime = add(totalOvertime, amount);
     return {
       key: `he-${i}`,
-      label: `Hora extra ${(line.rate * 100).toFixed(0)}% (${line.hours}h)`,
+      label: `Hora extra ${formatPercent(line.rate, 0)} (${line.hours}h)`,
       amount,
       type: 'earning' as const,
-      explanation: `${(hourlyRate / 100).toFixed(2)} × (1 + ${(line.rate * 100).toFixed(0)}%) × ${line.hours}h`,
+      explanation: `${formatDecimal(hourlyRate / 100, 2)} × (1 + ${formatPercent(line.rate, 0)}) × ${line.hours}h`,
     };
   });
 
@@ -43,9 +44,9 @@ export function calculateOvertime(input: OvertimeInput, rules: RuleSet): Calcula
     ],
     totals: { gross: add(totalOvertime, dsr), deductions: 0, net: add(totalOvertime, dsr) },
     steps: [
-      { label: 'Valor-hora', formula: `${(hourlyBase / 100).toFixed(2)} ÷ ${monthlyHours}h`, value: hourlyRate },
+      { label: 'Valor-hora', formula: `${formatDecimal(hourlyBase / 100, 2)} ÷ ${monthlyHours}h`, value: hourlyRate },
       { label: 'Total de horas extras', formula: 'Soma das linhas', value: totalOvertime },
-      { label: 'DSR sobre HE', formula: `${(totalOvertime / 100).toFixed(2)} ÷ ${input.workingDaysInMonth} × ${input.sundaysAndHolidaysInMonth}`, value: dsr },
+      { label: 'DSR sobre HE', formula: `${formatDecimal(totalOvertime / 100, 2)} ÷ ${input.workingDaysInMonth} × ${input.sundaysAndHolidaysInMonth}`, value: dsr },
     ],
     included: [],
     excluded: [],

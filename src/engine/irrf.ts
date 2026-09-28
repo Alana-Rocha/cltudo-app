@@ -1,6 +1,7 @@
 import type { RuleSet } from '@/rules/schema';
 import { add, clampToZero, min, multiply, subtract, type Cents } from '@/lib/money';
 import type { Step } from './types';
+import { formatDecimal, formatPercent } from '@/lib/format';
 
 export type IrrfInput = {
   /** Taxable income for this calculation (salary, or 13º integral, etc). */
@@ -52,20 +53,23 @@ export function calculateIrrf(input: IrrfInput, rules: RuleSet): IrrfResult {
     {
       label: 'Base de cálculo do IRRF',
       formula: usedSimplifiedDiscount
-        ? `${(input.taxableIncome / 100).toFixed(2)} − ${(rules.irrf.simplifiedDiscount / 100).toFixed(2)} (desconto simplificado)`
-        : `${(input.taxableIncome / 100).toFixed(2)} − ${(legalDeductions / 100).toFixed(2)} (INSS + dependentes + pensão + outras)`,
+        ? `${formatDecimal(input.taxableIncome / 100, 2)} − ${formatDecimal(rules.irrf.simplifiedDiscount / 100, 2)} (desconto simplificado)`
+        : `${formatDecimal(input.taxableIncome / 100, 2)} − ${formatDecimal(legalDeductions / 100, 2)} (INSS + dependentes + pensão + outras)`,
       value: base,
     },
     {
       label: 'IRRF pela tabela progressiva',
-      formula: `${(base / 100).toFixed(2)} × ${(bracketRate * 100).toFixed(1)}% − parcela a deduzir`,
+      formula: `${formatDecimal(base / 100, 2)} × ${formatPercent(bracketRate, 1)} − parcela a deduzir`,
       value: taxBeforeReducer,
     },
   ];
   if (reducerApplied > 0) {
     steps.push({
       label: 'Redutor da reforma do IR (vigente a partir de 2026)',
-      formula: `Redução aplicada sobre o imposto apurado`,
+      formula:
+        input.taxableIncome <= rules.irrf.reducer.fullExemptionUpTo
+          ? `Rendimento até ${formatDecimal(rules.irrf.reducer.fullExemptionUpTo / 100, 2)}: imposto zerado`
+          : `${formatDecimal(rules.irrf.reducer.phaseOutConstant / 100, 2)} − ${formatDecimal(rules.irrf.reducer.phaseOutRate, 6)} × ${formatDecimal(input.taxableIncome / 100, 2)}`,
       value: -reducerApplied,
     });
   }
@@ -96,33 +100,28 @@ function applyProgressiveTable(base: Cents, rules: RuleSet): { tax: Cents; rate:
 }
 
 /**
- * Applies the 2026 reform's monthly reducer (Lei 15.270/2025): full
- * exemption up to `fullExemptionUpTo`, linearly phasing out to no reduction
- * at `phaseOutUpTo`.
- *
- * VERIFY (Fase 1 §4, item 4): the exact phase-out formula was not confirmed
- * against a primary source. This implementation uses a standard continuous
- * linear phase-out (0% reduction at phaseOutUpTo, 100% at fullExemptionUpTo)
- * so behavior is at least continuous and monotonic; confirm against the
- * official formula before relying on this for real payroll amounts.
+ * Monthly reduction from Lei 15.270/2025: tax is zeroed up to
+ * `fullExemptionUpTo`; up to `phaseOutUpTo` the reduction is
+ * `phaseOutConstant − phaseOutRate × rendimento tributável`, never more than
+ * the tax itself.
  */
 function applyReducer(
   taxableIncome: Cents,
   taxBeforeReducer: Cents,
   rules: RuleSet
 ): { finalTax: Cents; reducerApplied: Cents } {
-  const { fullExemptionUpTo, phaseOutUpTo } = rules.irrf.reducer;
+  const { fullExemptionUpTo, phaseOutUpTo, phaseOutConstant, phaseOutRate } = rules.irrf.reducer;
 
   if (taxableIncome <= fullExemptionUpTo) {
     return { finalTax: 0, reducerApplied: taxBeforeReducer };
   }
-  if (taxableIncome >= phaseOutUpTo || phaseOutUpTo <= fullExemptionUpTo) {
+  if (taxableIncome > phaseOutUpTo) {
     return { finalTax: taxBeforeReducer, reducerApplied: 0 };
   }
 
-  const progress = (taxableIncome - fullExemptionUpTo) / (phaseOutUpTo - fullExemptionUpTo);
-  const finalTax = Math.round(taxBeforeReducer * progress);
-  return { finalTax, reducerApplied: subtract(taxBeforeReducer, finalTax) };
+  const reduction = clampToZero(subtract(phaseOutConstant, multiply(taxableIncome, phaseOutRate)));
+  const reducerApplied = min(reduction, taxBeforeReducer);
+  return { finalTax: subtract(taxBeforeReducer, reducerApplied), reducerApplied };
 }
 
 /**
@@ -140,7 +139,7 @@ export function calculateIrrfStandalone(input: IrrfInput, rules: RuleSet): impor
     steps: result.steps,
     included: [],
     excluded: [],
-    warnings: result.reducerApplied > 0 ? [`Redutor da reforma de 2026 aplicado: redução de ${(result.reducerApplied / 100).toFixed(2)} sobre o imposto apurado pela tabela.`] : [],
+    warnings: result.reducerApplied > 0 ? [`Redutor da reforma de 2026 aplicado: redução de ${formatDecimal(result.reducerApplied / 100, 2)} sobre o imposto apurado pela tabela.`] : [],
     rulesVersion: rules.id,
   };
 }

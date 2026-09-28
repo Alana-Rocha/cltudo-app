@@ -3,6 +3,7 @@ import { add, min, multiply, subtract, type Cents } from '@/lib/money';
 import { calculateInss } from './inss';
 import { calculateIrrf } from './irrf';
 import type { CalculationResult } from './types';
+import { formatPercent } from '@/lib/format';
 
 export type SalaryInput = {
   grossSalary: Cents;
@@ -31,6 +32,7 @@ export function calculateSalary(input: SalaryInput, rules: RuleSet): Calculation
     input.hasTransportVoucher && input.transportVoucherValue
       ? min(input.transportVoucherValue, transportVoucherCap)
       : 0;
+  const transportVoucherRatePct = formatPercent(rules.salary.transportVoucherMaxRate, 0);
 
   const alimony = input.alimony ?? 0;
   const otherDeductions = input.otherDeductions ?? 0;
@@ -46,7 +48,7 @@ export function calculateSalary(input: SalaryInput, rules: RuleSet): Calculation
         label: 'INSS',
         amount: inss.total,
         type: 'deduction',
-        explanation: `Alíquota efetiva ${(inss.effectiveRate * 100).toFixed(2)}%`,
+        explanation: `Alíquota efetiva ${formatPercent(inss.effectiveRate, 2)}`,
         legalBasis: 'Lei 8.212/1991',
       },
       {
@@ -58,7 +60,18 @@ export function calculateSalary(input: SalaryInput, rules: RuleSet): Calculation
         legalBasis: 'Lei 7.713/1988',
       },
       ...(transportVoucherDiscount > 0
-        ? [{ key: 'vt', label: 'Vale-transporte', amount: transportVoucherDiscount, type: 'deduction' as const, explanation: 'Limitado a 6% do salário base' }]
+        ? [
+            {
+              key: 'vt',
+              label: 'Vale-transporte',
+              amount: transportVoucherDiscount,
+              type: 'deduction' as const,
+              explanation:
+                transportVoucherDiscount < (input.transportVoucherValue ?? 0)
+                  ? `Limitado a ${transportVoucherRatePct} do salário base`
+                  : `Custo mensal das passagens (abaixo do limite de ${transportVoucherRatePct})`,
+            },
+          ]
         : []),
       ...(alimony > 0
         ? [{ key: 'alimony', label: 'Pensão alimentícia', amount: alimony, type: 'deduction' as const, explanation: 'Valor informado' }]

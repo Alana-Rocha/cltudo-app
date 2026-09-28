@@ -52,6 +52,26 @@ describe('calculateIrrf', () => {
     expect(result.total).toBe(result.taxBeforeReducer);
   });
 
+  it('faixa de transição aplica a redução oficial: 978,62 − 0,133145 × rendimento', () => {
+    // Base = 6.000 − 607,20 = 5.392,80 → 5.392,80 × 27,5% − 908,73 = 574,29
+    // Redução = 978,62 − 0,133145 × 6.000 = 179,75 → imposto = 394,54
+    const result = calculateIrrf(
+      { taxableIncome: toCents(6000), inss: 0, dependents: 0 },
+      ruleSet2026_01
+    );
+    expect(result.taxBeforeReducer).toBe(toCents(574.29));
+    expect(result.reducerApplied).toBe(toCents(179.75));
+    expect(result.total).toBe(toCents(394.54));
+  });
+
+  it('redução é contínua em R$ 5.000,01 (imposto próximo de zero)', () => {
+    const result = calculateIrrf(
+      { taxableIncome: toCents(5000.01), inss: 0, dependents: 0 },
+      ruleSet2026_01
+    );
+    expect(result.total).toBeLessThan(toCents(1));
+  });
+
   it('base nunca fica negativa mesmo com deduções maiores que o rendimento', () => {
     const result = calculateIrrf(
       { taxableIncome: toCents(1000), inss: toCents(2000), dependents: 5 },

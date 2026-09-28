@@ -15,6 +15,14 @@ describe('calculateVacation', () => {
     expect(bonus.amount).toBe(Math.round(toCents(3000) / 3));
   });
 
+  it('média de variáveis habituais entra na base das férias (CLT art. 142, §5º)', () => {
+    const result = calculateVacation(
+      { grossSalary: toCents(3000), daysTaken: 30, daysSold: 0, dependents: 0, averageVariables: toCents(600) },
+      ruleSet2026_01
+    );
+    expect(result.items.find((i) => i.key === 'taken')!.amount).toBe(toCents(3600));
+  });
+
   it('abono pecuniário de 10 dias é isento de INSS/IRRF (não entra na base tributável)', () => {
     const result = calculateVacation(
       { grossSalary: toCents(3000), daysTaken: 20, daysSold: 10, dependents: 0 },

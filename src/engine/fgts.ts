@@ -1,5 +1,6 @@
 import type { RuleSet } from '@/rules/schema';
 import { add, multiply, type Cents } from '@/lib/money';
+import { formatDecimal, formatPercent } from '@/lib/format';
 
 export type TerminationType = 'without_cause' | 'employee_resignation' | 'just_cause' | 'agreement' | 'contract_end';
 
@@ -102,7 +103,7 @@ export function calculateFgtsStandalone(
       label: 'Depósito mensal do FGTS',
       amount: monthlyDeposit,
       type: 'info',
-      explanation: `${(input.grossSalary / 100).toFixed(2)} × ${(rate * 100).toFixed(0)}%`,
+      explanation: `${formatDecimal(input.grossSalary / 100, 2)} × ${formatPercent(rate, 0)}`,
       legalBasis: 'Lei 8.036/1990',
     },
   ];
@@ -133,10 +134,10 @@ export function calculateFgtsStandalone(
       },
       {
         key: 'fine',
-        label: `Multa rescisória (${(fineResult.fineRate * 100).toFixed(0)}%)`,
+        label: `Multa rescisória (${formatPercent(fineResult.fineRate, 0)})`,
         amount: fineResult.fine,
         type: 'earning',
-        explanation: `${(fineResult.estimatedBalance / 100).toFixed(2)} × ${(fineResult.fineRate * 100).toFixed(0)}%`,
+        explanation: `${formatDecimal(fineResult.estimatedBalance / 100, 2)} × ${formatPercent(fineResult.fineRate, 0)}`,
         legalBasis: 'Lei 8.036/1990, art. 18',
       }
     );
@@ -145,7 +146,7 @@ export function calculateFgtsStandalone(
   return {
     items,
     totals: { gross: monthlyDeposit, deductions: 0, net: monthlyDeposit },
-    steps: [{ label: 'Depósito mensal', formula: `${(input.grossSalary / 100).toFixed(2)} × ${(rate * 100).toFixed(0)}%`, value: monthlyDeposit }],
+    steps: [{ label: 'Depósito mensal', formula: `${formatDecimal(input.grossSalary / 100, 2)} × ${formatPercent(rate, 0)}`, value: monthlyDeposit }],
     included: [],
     excluded: [],
     warnings,

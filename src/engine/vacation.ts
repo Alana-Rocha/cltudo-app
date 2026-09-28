@@ -3,6 +3,7 @@ import { add, divide, multiply, subtract, type Cents } from '@/lib/money';
 import { calculateInss } from './inss';
 import { calculateIrrf } from './irrf';
 import type { CalculationResult } from './types';
+import { formatDecimal } from '@/lib/format';
 
 export type VacationInput = {
   grossSalary: Cents;
@@ -10,6 +11,7 @@ export type VacationInput = {
   daysSold: number; // 0..10 (abono pecuniário)
   dependents: number;
   unjustifiedAbsences?: number;
+  averageVariables?: Cents; // média de HE/adicionais habituais — CLT art. 142, §5º
 };
 
 /** CLT art. 130 — maximum vacation days by unjustified absences. */
@@ -29,7 +31,8 @@ export function calculateVacation(input: VacationInput, rules: RuleSet): Calcula
     throw new Error(`daysSold must not exceed ${maxSoldDays}`);
   }
 
-  const dailyRate = divide(input.grossSalary, 30);
+  const remunerationBase = add(input.grossSalary, input.averageVariables ?? 0);
+  const dailyRate = divide(remunerationBase, 30);
 
   const takenValue = multiply(dailyRate, input.daysTaken);
   const takenBonus = multiply(takenValue, rules.vacation.bonusFraction);
@@ -59,7 +62,7 @@ export function calculateVacation(input: VacationInput, rules: RuleSet): Calcula
 
   return {
     items: [
-      { key: 'taken', label: `Férias gozadas (${input.daysTaken} dias)`, amount: takenValue, type: 'earning', explanation: `${(input.grossSalary / 100).toFixed(2)} ÷ 30 × ${input.daysTaken}` },
+      { key: 'taken', label: `Férias gozadas (${input.daysTaken} dias)`, amount: takenValue, type: 'earning', explanation: `${formatDecimal(remunerationBase / 100, 2)} ÷ 30 × ${input.daysTaken}${input.averageVariables ? ' (salário + média de variáveis)' : ''}` },
       { key: 'taken-bonus', label: '1/3 constitucional (gozadas)', amount: takenBonus, type: 'earning', explanation: '1/3 sobre as férias gozadas', legalBasis: 'CF art. 7º, XVII' },
       { key: 'inss', label: 'INSS sobre férias', amount: inss.total, type: 'deduction', explanation: 'Sobre férias gozadas + 1/3' },
       { key: 'irrf', label: 'IRRF sobre férias', amount: irrf.total, type: 'deduction', explanation: 'Sobre férias gozadas + 1/3, tributação separada do salário' },

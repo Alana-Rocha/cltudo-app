@@ -3,6 +3,7 @@ import { add, clampToZero, divide, multiply, subtract, type Cents } from '@/lib/
 import { calculateInss } from './inss';
 import { calculateIrrf } from './irrf';
 import type { CalculationResult } from './types';
+import { formatDecimal } from '@/lib/format';
 
 export type ThirteenthInput = {
   grossSalary: Cents;
@@ -35,7 +36,7 @@ export function calculateThirteenth(input: ThirteenthInput, rules: RuleSet): Cal
 
   return {
     items: [
-      { key: 'full', label: '13º integral', amount: fullAmount, type: 'earning', explanation: `${(monthlyBase / 100).toFixed(2)} ÷ 12 × ${input.monthsWorked} avos` },
+      { key: 'full', label: '13º integral', amount: fullAmount, type: 'earning', explanation: `${formatDecimal(monthlyBase / 100, 2)} ÷ 12 × ${input.monthsWorked} avos` },
       { key: 'first', label: '1ª parcela (até 30/11)', amount: firstInstallment, type: 'earning', explanation: '50% do integral, sem descontos' },
       { key: 'inss', label: 'INSS sobre o 13º', amount: inss.total, type: 'deduction', explanation: 'Sobre o 13º integral, separado do salário' },
       { key: 'irrf', label: 'IRRF sobre o 13º', amount: irrf.total, type: 'deduction', explanation: 'Sobre o 13º integral, tributação exclusiva' },

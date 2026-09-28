@@ -139,6 +139,26 @@ describe('calculateTermination — matriz de verbas', () => {
     expect(result.items.some((i) => i.key === 'vacation-expired')).toBe(false);
   });
 
+  it('média de variáveis entra no aviso, 13º e férias, mas não no saldo de salário', () => {
+    const base = {
+      admissionDate: new Date(Date.UTC(2025, 6, 1)),
+      terminationDate: new Date(Date.UTC(2025, 11, 20)),
+      grossSalary: toCents(3000),
+      terminationType: 'without_cause' as const,
+      noticeMode: 'indemnified' as const,
+      dependents: 0,
+      daysWorkedInLastMonth: 20,
+    };
+    const without = calculateTermination(base, ruleSet2026_01);
+    const withAvg = calculateTermination({ ...base, averageVariables: toCents(600) }, ruleSet2026_01);
+    const item = (r: typeof without, key: string) => r.items.find((i) => i.key === key)!.amount;
+
+    expect(item(withAvg, 'balance')).toBe(item(without, 'balance'));
+    expect(item(withAvg, 'notice')).toBe(toCents(3600)); // 30 dias × (3.000 + 600)
+    expect(item(withAvg, 'thirteenth')).toBeGreaterThan(item(without, 'thirteenth'));
+    expect(item(withAvg, 'vacation')).toBeGreaterThan(item(without, 'vacation'));
+  });
+
   it('admissão há menos de 1 ano: aviso prévio é de 30 dias (sem acréscimo)', () => {
     const recentAdmission = new Date(Date.UTC(2025, 6, 1)); // 6 months before termination
     const result = calculateTermination(

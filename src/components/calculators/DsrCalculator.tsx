@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
 import { usePersistedState } from '@/hooks/usePersistedState';
+import { useLiveCalculation } from '@/hooks/useLiveCalculation';
 import { CurrencyInput } from '@/components/ui/CurrencyInput';
 import { NumberInput } from '@/components/ui/NumberInput';
 import { CalculationBreakdown } from '@/components/shared/CalculationBreakdown';
@@ -20,26 +20,22 @@ export function DsrCalculator() {
   const [variableAmount, setVariableAmount] = usePersistedState('calculadora-dsr:variableAmount', '');
   const [workingDays, setWorkingDays] = usePersistedState('calculadora-dsr:workingDays', '22');
   const [sundaysHolidays, setSundaysHolidays] = usePersistedState('calculadora-dsr:sundaysHolidays', '4');
-  const [result, setResult] = useState<CalculationResult | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  function compute(): CalculationResult | string {
     const cents = toCents(parseBrNumber(variableAmount));
-    if (cents <= 0) return setError('Informe um valor de remuneração variável maior que zero.');
-    setError(null);
-    setResult(
-      calculateDsr(
-        { variableAmount: cents, workingDaysInMonth: Number(workingDays) || 22, sundaysAndHolidaysInMonth: Number(sundaysHolidays) || 0 },
-        getRulesFor(new Date())
-      )
+    if (cents <= 0) return 'Informe um valor de remuneração variável maior que zero.';
+    return calculateDsr(
+      { variableAmount: cents, workingDaysInMonth: Number(workingDays) || 22, sundaysAndHolidaysInMonth: Number(sundaysHolidays) || 0 },
+      getRulesFor(new Date())
     );
   }
+
+  const { result, error, handleSubmit, resultRef } = useLiveCalculation(compute());
 
   return (
     <div>
       <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border bg-white p-6">
-        <CurrencyInput id="variable" label="Remuneração variável no mês (comissões, etc.)" value={variableAmount} onChange={setVariableAmount} required error={error ?? undefined} />
+        <CurrencyInput id="variable" label="Remuneração variável no mês (comissões, etc.)" value={variableAmount} onChange={setVariableAmount} required error={error} />
         <div className="grid grid-cols-2 gap-4">
           <NumberInput id="workingDays" label="Dias úteis no mês" value={workingDays} onChange={setWorkingDays} min={1} max={31} />
           <NumberInput id="sundaysHolidays" label="Domingos + feriados" value={sundaysHolidays} onChange={setSundaysHolidays} min={0} max={10} />
@@ -48,7 +44,9 @@ export function DsrCalculator() {
           Calcular
         </button>
       </form>
-      {result && <CalculationBreakdown result={result} />}
+      <div ref={resultRef} className="scroll-mt-20">
+        {result && <CalculationBreakdown result={result} headline={{ label: 'Variáveis + DSR' }} />}
+      </div>
       <Disclaimer />
     </div>
   );

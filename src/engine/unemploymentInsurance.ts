@@ -1,6 +1,7 @@
 import type { RuleSet } from '@/rules/schema';
 import { add, clampToZero, divide, multiply, subtract, max as maxCents, min as minCents, type Cents } from '@/lib/money';
 import type { CalculationResult } from './types';
+import { formatDecimal, formatPercent } from '@/lib/format';
 
 export type UnemploymentInsuranceInput = {
   lastThreeSalaries: [Cents, Cents, Cents] | [Cents, Cents] | [Cents];
@@ -8,11 +9,7 @@ export type UnemploymentInsuranceInput = {
   monthsWorkedInPeriod: number; // conforme a regra de carência de cada solicitação
 };
 
-/**
- * Seguro-desemprego (Lei 7.998/1990). VERIFY: valores de faixa e teto de
- * 2026 vêm de fontes secundárias convergentes (não confirmados em fonte
- * primária do MTE nesta pesquisa) — ver rules/2026-01.ts.
- */
+/** Seguro-desemprego (Lei 7.998/1990). */
 export function calculateUnemploymentInsurance(
   input: UnemploymentInsuranceInput,
   rules: RuleSet
@@ -28,11 +25,11 @@ export function calculateUnemploymentInsurance(
 
   if (average <= table.tier1UpTo) {
     rawInstallment = multiply(average, table.tier1Rate);
-    tierLabel = `Faixa 1: ${(table.tier1Rate * 100).toFixed(0)}% da média`;
+    tierLabel = `Faixa 1: ${formatPercent(table.tier1Rate, 0)} da média`;
   } else if (average <= table.tier2UpTo) {
     const excess = subtract(average, table.tier1UpTo);
     rawInstallment = add(table.tier2Base, multiply(excess, table.tier2Rate));
-    tierLabel = `Faixa 2: ${(table.tier2Base / 100).toFixed(2)} + ${(table.tier2Rate * 100).toFixed(0)}% do excedente`;
+    tierLabel = `Faixa 2: ${formatDecimal(table.tier2Base / 100, 2)} + ${formatPercent(table.tier2Rate, 0)} do excedente`;
   } else {
     rawInstallment = table.ceiling;
     tierLabel = 'Faixa 3: valor fixo (teto)';
@@ -50,15 +47,13 @@ export function calculateUnemploymentInsurance(
     items: [
       { key: 'average', label: 'Média dos últimos 3 salários', amount: average, type: 'info', explanation: 'Base de cálculo' },
       { key: 'installment', label: 'Valor de cada parcela', amount: installment, type: 'earning', explanation: tierLabel, legalBasis: 'Lei 7.998/1990' },
-      { key: 'total', label: `Total (${numberOfInstallments} parcelas)`, amount: multiply(installment, numberOfInstallments), type: 'earning', explanation: `${(installment / 100).toFixed(2)} × ${numberOfInstallments}` },
+      { key: 'total', label: `Total (${numberOfInstallments} parcelas)`, amount: multiply(installment, numberOfInstallments), type: 'earning', explanation: `${formatDecimal(installment / 100, 2)} × ${numberOfInstallments}` },
     ],
     totals: { gross: multiply(installment, numberOfInstallments), deductions: 0, net: multiply(installment, numberOfInstallments) },
     steps: [{ label: 'Parcela', formula: tierLabel, value: installment }],
     included: [],
     excluded: numberOfInstallments === 0 ? ['Tempo trabalhado informado não atinge a carência mínima para nenhuma faixa de parcelas nesta solicitação.'] : [],
-    warnings: [
-      'Valores de faixa e teto de 2026 não confirmados em fonte primária do Ministério do Trabalho e Emprego — confirme antes de decidir com base neste valor.',
-    ],
+    warnings: [],
     rulesVersion: rules.id,
   };
 }

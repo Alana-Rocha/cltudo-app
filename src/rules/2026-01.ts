@@ -1,25 +1,17 @@
 import type { RuleSet } from './schema';
 
 /**
- * FALLBACK rule set, effective 2026-01-01.
- *
- * IMPORTANT — values flagged "A VERIFICAR" in Fase 1 are marked below with a
- * `VERIFY:` comment. They come from convergent third-party sources found in
- * research, NOT from a primary source (Diário Oficial, Receita Federal,
- * INSS/Previdência) that could be fetched directly. Do not treat this file as
- * authoritative for production without confirming those values against the
- * official publication. This is exactly the situation `rules/index.ts`'s
- * remote-with-fallback design exists for: update this file (or better, the
- * remote JSON) the moment the official values are confirmed, without
- * touching the engine.
+ * FALLBACK rule set, effective 2026-01-01. INSS, IRRF and seguro-desemprego
+ * values were checked against gov.br primary sources on 2026-09-27.
  */
 export const ruleSet2026_01: RuleSet = {
   id: '2026-01',
   effectiveFrom: '2026-01-01',
   sources: [
-    'Portaria Interministerial MPS/MF nº 13/2026 (INSS — citada por fontes secundárias, não confirmada em fonte primária)',
+    'Portaria Interministerial MPS/MF nº 13/2026 (INSS — faixas e teto de 2026)',
     'Lei nº 15.270/2025 (redutor mensal do IRRF)',
-    'A VERIFICAR: tabela progressiva mensal do IRRF (Receita Federal) — valores abaixo vêm de fontes secundárias divergentes entre si',
+    'Receita Federal — Tributação de 2026 (tabela progressiva mensal do IRRF e redução da Lei 15.270/2025)',
+    'MTE — reajuste do Seguro-Desemprego, vigência 11/01/2026',
   ],
   minimumWage: 162_100, // R$ 1.621,00
 
@@ -34,25 +26,22 @@ export const ruleSet2026_01: RuleSet = {
   },
 
   irrf: {
-    // VERIFY: these are the brackets last confirmed in force (in effect since
-    // May/2023, Lei 14.663/2023) and reproduced consistently by at least one
-    // 2026 source's worked example (otimizapro.com, R$5.000 example). NOT
-    // confirmed against a 2026 Receita Federal publication — third-party
-    // sources found in research disagreed with each other on this table, so
-    // treat these bracket cut-offs and deductions as placeholders until
-    // checked against the official 2026 Instrução Normativa RFB.
+    // Conferido em gov.br/receitafederal (Tributação de 2026) em 2026-09-27.
     brackets: [
-      { upTo: 225_920, rate: 0, deduction: 0 },
-      { upTo: 282_665, rate: 0.075, deduction: 16_944 },
-      { upTo: 375_105, rate: 0.15, deduction: 38_144 },
-      { upTo: 466_468, rate: 0.225, deduction: 66_277 },
-      { upTo: null, rate: 0.275, deduction: 89_600 },
+      { upTo: 242_880, rate: 0, deduction: 0 },
+      { upTo: 282_665, rate: 0.075, deduction: 18_216 },
+      { upTo: 375_105, rate: 0.15, deduction: 39_416 },
+      { upTo: 466_468, rate: 0.225, deduction: 67_549 },
+      { upTo: null, rate: 0.275, deduction: 90_873 },
     ],
     dependentDeduction: 18_959, // R$ 189,59
-    simplifiedDiscount: 60_720, // R$ 607,20 — VERIFY: one source cited R$ 564,80 instead
+    simplifiedDiscount: 60_720, // R$ 607,20
     reducer: {
       fullExemptionUpTo: 500_000, // R$ 5.000,00 rendimento tributável
-      phaseOutUpTo: 735_000, // R$ 7.350,00 — VERIFY exact phase-out formula, see engine/irrf.ts
+      phaseOutUpTo: 735_000, // R$ 7.350,00
+      // Redução = R$ 978,62 − 0,133145 × rendimento tributável mensal
+      phaseOutConstant: 97_862,
+      phaseOutRate: 0.133145,
     },
   },
 
@@ -117,9 +106,7 @@ export const ruleSet2026_01: RuleSet = {
   },
 
   unemploymentInsurance: {
-    // VERIFY: valores 2026 convergentes entre múltiplas fontes secundárias
-    // (MTE, vigência 11/01/2026); não confirmados em fonte primária nesta
-    // pesquisa.
+    // Conferido em gov.br/trabalho-e-emprego (reajuste 2026) em 2026-09-27.
     tier1UpTo: 222_217, // R$ 2.222,17
     tier1Rate: 0.8,
     tier2UpTo: 370_399, // R$ 3.703,99

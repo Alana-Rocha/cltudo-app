@@ -3,6 +3,7 @@ import { divide, multiply, subtract, type Cents } from '@/lib/money';
 import { calculateInss } from './inss';
 import { calculateIrrf } from './irrf';
 import type { CalculationResult } from './types';
+import { formatDecimal, formatPercent } from '@/lib/format';
 
 export type ProportionalSalaryInput = {
   grossSalary: Cents; // salário mensal integral
@@ -21,8 +22,8 @@ export function calculateProportionalSalary(input: ProportionalSalaryInput, rule
 
   return {
     items: [
-      { key: 'proportional', label: `Salário proporcional (${input.daysWorked} dias)`, amount: proportionalGross, type: 'earning', explanation: `${(input.grossSalary / 100).toFixed(2)} ÷ 30 × ${input.daysWorked}` },
-      { key: 'inss', label: 'INSS', amount: inss.total, type: 'deduction', explanation: `Alíquota efetiva ${(inss.effectiveRate * 100).toFixed(2)}%` },
+      { key: 'proportional', label: `Salário proporcional (${input.daysWorked} dias)`, amount: proportionalGross, type: 'earning', explanation: `${formatDecimal(input.grossSalary / 100, 2)} ÷ 30 × ${input.daysWorked}` },
+      { key: 'inss', label: 'INSS', amount: inss.total, type: 'deduction', explanation: `Alíquota efetiva ${formatPercent(inss.effectiveRate, 2)}` },
       { key: 'irrf', label: 'IRRF', amount: irrf.total, type: 'deduction', explanation: irrf.usedSimplifiedDiscount ? 'Desconto simplificado' : 'Deduções legais' },
     ],
     totals: { gross: proportionalGross, deductions: inss.total + irrf.total, net },

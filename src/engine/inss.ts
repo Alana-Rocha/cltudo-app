@@ -1,6 +1,7 @@
 import type { RuleSet } from '@/rules/schema';
 import { add, clampToZero, min, multiply, subtract, type Cents } from '@/lib/money';
 import type { Step } from './types';
+import { formatDecimal, formatPercent } from '@/lib/format';
 
 export type InssBracketBreakdown = {
   rate: number;
@@ -47,13 +48,13 @@ export function calculateInss(base: Cents, rules: RuleSet): InssResult {
   const effectiveRate = cappedBase > 0 ? total / cappedBase : 0;
 
   const steps: Step[] = brackets.map((b, i) => ({
-    label: `INSS — faixa ${i + 1} (${(b.rate * 100).toFixed(1)}%)`,
-    formula: `${(b.base / 100).toFixed(2)} × ${(b.rate * 100).toFixed(1)}%`,
+    label: `INSS — faixa ${i + 1} (${formatPercent(b.rate, 1)})`,
+    formula: `${formatDecimal(b.base / 100, 2)} × ${formatPercent(b.rate, 1)}`,
     value: b.amount,
   }));
   steps.push({
     label: 'INSS — total',
-    formula: brackets.map((b) => (b.amount / 100).toFixed(2)).join(' + '),
+    formula: brackets.map((b) => formatDecimal(b.amount / 100, 2)).join(' + '),
     value: total,
   });
 
@@ -70,24 +71,24 @@ export function calculateInssStandalone(base: Cents, rules: RuleSet): import('./
     items: [
       ...result.brackets.map((b, i) => ({
         key: `bracket-${i}`,
-        label: `Faixa ${i + 1} (${(b.rate * 100).toFixed(1)}%)`,
+        label: `Faixa ${i + 1} (${formatPercent(b.rate, 1)})`,
         amount: b.amount,
         type: 'deduction' as const,
-        explanation: `${(b.base / 100).toFixed(2)} × ${(b.rate * 100).toFixed(1)}%`,
+        explanation: `${formatDecimal(b.base / 100, 2)} × ${formatPercent(b.rate, 1)}`,
       })),
       {
         key: 'effective-rate',
         label: 'Alíquota efetiva',
         amount: 0,
         type: 'info' as const,
-        explanation: `${(result.effectiveRate * 100).toFixed(2)}% do salário (alíquota nominal da última faixa: ${(result.nominalRate * 100).toFixed(1)}%)`,
+        explanation: `${formatPercent(result.effectiveRate, 2)} do salário (alíquota nominal da última faixa: ${formatPercent(result.nominalRate, 1)})`,
       },
     ],
     totals: { gross: base, deductions: result.total, net: base - result.total },
     steps: result.steps,
     included: [],
     excluded: [],
-    warnings: base > rules.inss.ceiling ? [`Valor acima do teto de contribuição (${(rules.inss.ceiling / 100).toFixed(2)}) não sofre desconto adicional.`] : [],
+    warnings: base > rules.inss.ceiling ? [`Valor acima do teto de contribuição (${formatDecimal(rules.inss.ceiling / 100, 2)}) não sofre desconto adicional.`] : [],
     rulesVersion: rules.id,
   };
 }

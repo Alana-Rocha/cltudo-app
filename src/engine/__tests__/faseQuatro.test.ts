@@ -99,6 +99,22 @@ describe('calculateMaternityLeave', () => {
     const total = result.items.find((i) => i.key === 'total')!;
     expect(total.amount).toBe(toCents(18000));
   });
+
+  it('desconta INSS e IRRF mês a mês e multiplica o líquido pelo período', () => {
+    const result = calculateMaternityLeave({ monthlyAmount: toCents(8000) }, ruleSet2026_01);
+    const inss = result.items.find((i) => i.key === 'inss')!.amount;
+    const irrf = result.items.find((i) => i.key === 'irrf')!.amount;
+    expect(inss).toBeGreaterThan(0);
+    expect(irrf).toBeGreaterThan(0); // acima de R$ 7.350 não há redutor
+    expect(result.totals.deductions).toBe(4 * (inss + irrf));
+    expect(result.totals.net).toBe(4 * (toCents(8000) - inss - irrf));
+  });
+
+  it('até R$ 5.000 o IRRF é zerado pelo redutor, mas o INSS continua', () => {
+    const result = calculateMaternityLeave({ monthlyAmount: toCents(3000) }, ruleSet2026_01);
+    expect(result.items.find((i) => i.key === 'irrf')!.amount).toBe(0);
+    expect(result.items.find((i) => i.key === 'inss')!.amount).toBeGreaterThan(0);
+  });
 });
 
 describe('calculateUnemploymentInsurance', () => {

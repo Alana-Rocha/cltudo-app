@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
 import { usePersistedState } from '@/hooks/usePersistedState';
+import { useLiveCalculation } from '@/hooks/useLiveCalculation';
 import { CurrencyInput } from '@/components/ui/CurrencyInput';
 import { CalculationBreakdown } from '@/components/shared/CalculationBreakdown';
 import { Disclaimer } from '@/components/shared/Disclaimer';
@@ -18,18 +18,15 @@ function parseBrNumber(input: string): number {
 export function UnhealthinessCalculator() {
   const [grade, setGrade] = usePersistedState<UnhealthinessGrade>('calculadora-insalubridade:grade', 'medium');
   const [customBase, setCustomBase] = usePersistedState('calculadora-insalubridade:customBase', '');
-  const [result, setResult] = useState<CalculationResult | null>(null);
-
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  function compute(): CalculationResult | string {
     const rules = getRulesFor(new Date());
-    setResult(
-      calculateUnhealthiness(
-        { grade, base: customBase ? toCents(parseBrNumber(customBase)) : undefined },
-        rules
-      )
+    return calculateUnhealthiness(
+      { grade, base: customBase ? toCents(parseBrNumber(customBase)) : undefined },
+      rules
     );
   }
+
+  const { result, handleSubmit, resultRef } = useLiveCalculation(compute());
 
   return (
     <div>
@@ -49,7 +46,9 @@ export function UnhealthinessCalculator() {
           Calcular
         </button>
       </form>
-      {result && <CalculationBreakdown result={result} />}
+      <div ref={resultRef} className="scroll-mt-20">
+        {result && <CalculationBreakdown result={result} headline={{ label: 'Adicional de insalubridade (mensal)' }} />}
+      </div>
       <Disclaimer />
     </div>
   );

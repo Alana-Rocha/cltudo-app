@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import { Logo } from '@/components/ui/Logo';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import { RelatedCalculators } from '@/components/shared/RelatedCalculators';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'], display: 'swap' });
@@ -42,13 +43,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <ThemeToggle />
           </div>
         </header>
-        <main className="mx-auto max-w-4xl px-4 py-8">{children}</main>
+        <main className="mx-auto max-w-4xl px-4 py-8">
+          {children}
+          <RelatedCalculators />
+        </main>
         <footer className="border-t">
           <p className="mx-auto max-w-4xl px-4 py-8 text-sm text-gray-500">
-            Os valores apresentados são estimativas com finalidade informativa e podem variar
-            conforme regras vigentes, convenções coletivas, contrato de trabalho, benefícios e
-            situações específicas. Para valores oficiais, consulte seu holerite, a empresa, um
-            contador ou um advogado trabalhista.
+            Calculadora Trabalhista — gratuita e sem cadastro. Os valores são estimativas
+            informativas e não substituem o holerite nem a orientação de um profissional.
           </p>
         </footer>
       </body>

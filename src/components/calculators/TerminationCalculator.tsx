@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { usePersistedState } from '@/hooks/usePersistedState';
+import { useLiveCalculation, type FieldError } from '@/hooks/useLiveCalculation';
 import { CurrencyInput } from '@/components/ui/CurrencyInput';
 import { NumberInput } from '@/components/ui/NumberInput';
 import { DateInput } from '@/components/ui/DateInput';
@@ -9,9 +10,9 @@ import { CalculationBreakdown } from '@/components/shared/CalculationBreakdown';
 import { Disclaimer } from '@/components/shared/Disclaimer';
 import { calculateTermination, type NoticeMode } from '@/engine/termination';
 import type { TerminationType } from '@/engine/fgts';
-import { getRulesFor } from '@/rules';
+import { earliestRulesDate, getRulesFor, hasRulesFor } from '@/rules';
 import { toCents } from '@/lib/money';
-import { parseBrDate } from '@/lib/dates';
+import { formatBrDate, parseBrDate } from '@/lib/dates';
 import type { CalculationResult } from '@/engine/types';
 
 function parseBrNumber(input: string): number {
@@ -31,6 +32,7 @@ export function TerminationCalculator() {
   const [admissionDate, setAdmissionDate] = usePersistedState('calculadora-rescisao:admissionDate', '');
   const [terminationDate, setTerminationDate] = usePersistedState('calculadora-rescisao:terminationDate', '');
   const [gross, setGross] = usePersistedState('calculadora-rescisao:gross', '');
+  const [averageVariables, setAverageVariables] = usePersistedState('calculadora-rescisao:averageVariables', '');
   const [terminationType, setTerminationType] = usePersistedState<TerminationType>('calculadora-rescisao:terminationType', 'without_cause');
   const [noticeMode, setNoticeMode] = usePersistedState<NoticeMode>('calculadora-rescisao:noticeMode', 'indemnified');
   const [daysWorked, setDaysWorked] = usePersistedState('calculadora-rescisao:daysWorked', '30');
@@ -41,8 +43,6 @@ export function TerminationCalculator() {
   const [expiredVacationOwed, setExpiredVacationOwed] = usePersistedState('calculadora-rescisao:expiredVacationOwed', '0');
   const [expiredVacationOwedTouched, setExpiredVacationOwedTouched] = usePersistedState('calculadora-rescisao:expiredVacationOwedTouched', false);
   const [expiredVacationDoubled, setExpiredVacationDoubled] = usePersistedState('calculadora-rescisao:expiredVacationDoubled', false);
-  const [result, setResult] = useState<CalculationResult | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
   // "Dias trabalhados no mês do desligamento" é só o pedaço do último mês
   // ainda não pago (saldo de salário) — sugerimos a partir das datas informadas,
@@ -69,48 +69,59 @@ export function TerminationCalculator() {
     setExpiredVacationOwed(String(Math.max(0, Math.min(30, 30 - taken))));
   }, [expiredVacationTaken, expiredVacationOwedTouched]);
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  function compute(): CalculationResult | FieldError {
     const admission = parseBrDate(admissionDate);
     const termination = parseBrDate(terminationDate);
     const grossCents = toCents(parseBrNumber(gross));
 
-    if (!admission) return setError('Informe a data de admissão no formato dd/mm/aaaa.');
-    if (!termination) return setError('Informe a data de desligamento no formato dd/mm/aaaa.');
+    if (!admission) return { field: 'admission', message: 'Informe a data de admissão no formato dd/mm/aaaa.' };
+    if (!termination) return { field: 'termination', message: 'Informe a data de desligamento no formato dd/mm/aaaa.' };
     if (termination.getTime() <= admission.getTime())
-      return setError('A data de desligamento deve ser depois da admissão.');
-    if (grossCents <= 0) return setError('Informe um salário bruto maior que zero.');
+      return { field: 'termination', message: 'A data de desligamento deve ser depois da admissão.' };
+    if (!hasRulesFor(termination))
+      return {
+        field: 'termination',
+        message: `Por enquanto só há regras de INSS e IRRF a partir de ${formatBrDate(earliestRulesDate())}. Desligamentos anteriores usavam outras tabelas.`,
+      };
+    if (grossCents <= 0) return { field: 'gross', message: 'Informe um salário bruto maior que zero.' };
 
-    setError(null);
     const rules = getRulesFor(termination); // regras vigentes na data de desligamento
-    setResult(
-      calculateTermination(
-        {
-          admissionDate: admission,
-          terminationDate: termination,
-          grossSalary: grossCents,
-          terminationType,
-          noticeMode,
-          dependents: Number(dependents) || 0,
-          daysWorkedInLastMonth: Number(daysWorked) || 0,
-          actualFgtsBalance: fgtsBalance ? toCents(parseBrNumber(fgtsBalance)) : undefined,
-          expiredVacationDays: Number(expiredVacationOwed) || 0,
-          expiredVacationDoubled,
-        },
-        rules
-      )
+    return calculateTermination(
+      {
+        admissionDate: admission,
+        terminationDate: termination,
+        grossSalary: grossCents,
+        averageVariables: averageVariables ? toCents(parseBrNumber(averageVariables)) : undefined,
+        terminationType,
+        noticeMode,
+        dependents: Number(dependents) || 0,
+        daysWorkedInLastMonth: Number(daysWorked) || 0,
+        actualFgtsBalance: fgtsBalance ? toCents(parseBrNumber(fgtsBalance)) : undefined,
+        expiredVacationDays: Number(expiredVacationOwed) || 0,
+        expiredVacationDoubled,
+      },
+      rules
     );
   }
+
+  const { result, errorFor, handleSubmit, resultRef } = useLiveCalculation(compute());
 
   return (
     <div>
       <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border bg-white p-6">
         <div className="grid grid-cols-2 gap-4">
-          <DateInput id="admission" label="Data de admissão" value={admissionDate} onChange={setAdmissionDate} />
-          <DateInput id="termination" label="Data de desligamento" value={terminationDate} onChange={setTerminationDate} />
+          <DateInput id="admission" label="Data de admissão" value={admissionDate} onChange={setAdmissionDate} error={errorFor('admission')} />
+          <DateInput id="termination" label="Data de desligamento" value={terminationDate} onChange={setTerminationDate} error={errorFor('termination')} />
         </div>
 
-        <CurrencyInput id="gross" label="Salário bruto" value={gross} onChange={setGross} required error={error ?? undefined} />
+        <CurrencyInput id="gross" label="Salário bruto" value={gross} onChange={setGross} required error={errorFor('gross')} />
+        <CurrencyInput
+          id="averageVariables"
+          label="Média mensal de variáveis habituais (opcional)"
+          value={averageVariables}
+          onChange={setAverageVariables}
+          hint="Horas extras, comissões e adicionais recebidos com frequência — média dos últimos 12 meses. Entra no aviso indenizado, 13º, férias e FGTS."
+        />
 
         <div>
           <label htmlFor="type" className="mb-1 block text-sm font-medium">
@@ -207,7 +218,9 @@ export function TerminationCalculator() {
           Calcular
         </button>
       </form>
-      {result && <CalculationBreakdown result={result} />}
+      <div ref={resultRef} className="scroll-mt-20">
+        {result && <CalculationBreakdown result={result} headline={{ label: 'Total líquido da rescisão' }} />}
+      </div>
       <Disclaimer />
     </div>
   );

@@ -53,6 +53,8 @@ export const ruleSetSchema = z
       reducer: z.object({
         fullExemptionUpTo: z.number().int().min(0),
         phaseOutUpTo: z.number().int().min(0),
+        phaseOutConstant: z.number().int().min(0),
+        phaseOutRate: z.number().min(0).max(1),
       }),
     }),
     fgts: z.object({

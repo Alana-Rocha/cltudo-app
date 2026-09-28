@@ -1,42 +1,75 @@
 'use client';
 
-import { useState } from 'react';
-import { formatCurrency } from '@/lib/format';
+import { useEffect, useState } from 'react';
+import { formatCurrency, formatDecimal } from '@/lib/format';
 import type { CalculationResult } from '@/engine/types';
 
 function formatStepValue(value: number, unit: 'currency' | 'days' | 'hours' | undefined): string {
   if (unit === 'days') return `${value} dia${value === 1 ? '' : 's'}`;
-  if (unit === 'hours') return `${(value / 100).toFixed(2)}h`;
+  if (unit === 'hours') return `${formatDecimal(value / 100, 2)}h`;
   return formatCurrency(value);
 }
 
-export function CalculationBreakdown({ result }: { result: CalculationResult }) {
+function formatRulesVersion(id: string): string {
+  const match = /^(\d{4})-(\d{2})$/.exec(id);
+  if (!match) return id;
+  return new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, 1)).toLocaleDateString('pt-BR', {
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'UTC',
+  });
+}
+
+type Headline = { label: string; field?: 'net' | 'deductions' };
+
+export function CalculationBreakdown({
+  result,
+  headline,
+  summary,
+}: {
+  result: CalculationResult;
+  headline: Headline;
+  summary?: React.ReactNode;
+}) {
   const [open, setOpen] = useState(false);
   const isMonetary = result.totals.gross !== 0 || result.totals.deductions !== 0 || result.totals.net !== 0;
+
+  // Announce only once the result settles, not on every keystroke of a live calculation.
+  const summaryText = isMonetary
+    ? `${headline.label}: ${formatCurrency(result.totals[headline.field ?? 'net'])}`
+    : result.items.map((i) => `${i.label}: ${i.explanation}`).join('. ');
+  const [announcement, setAnnouncement] = useState('');
+  useEffect(() => {
+    const timer = setTimeout(() => setAnnouncement(summaryText), 1000);
+    return () => clearTimeout(timer);
+  }, [summaryText]);
 
   return (
     <div className="mt-6 rounded-lg border bg-white">
       {isMonetary && (
         <div className="border-b p-6 text-center">
-          <p className="text-sm text-gray-500">Valor líquido</p>
-          <p className="text-3xl font-bold text-brand-700">{formatCurrency(result.totals.net)}</p>
+          <p className="text-sm text-gray-500">{headline.label}</p>
+          <p className="text-3xl font-bold text-brand-700">{formatCurrency(result.totals[headline.field ?? 'net'])}</p>
+          {summary}
         </div>
       )}
 
-      <ul className="divide-y" aria-live="polite">
+      <p className="sr-only" aria-live="polite">
+        {announcement}
+      </p>
+
+      <ul className="divide-y">
         {result.items.map((item) => (
-          <li key={item.key} className="flex items-center justify-between px-6 py-3">
+          <li key={item.key} className="flex items-center justify-between gap-4 px-6 py-3">
             <div>
               <p className="text-sm font-medium">{item.label}</p>
               <p className="text-xs text-gray-500">{item.explanation}</p>
             </div>
             {item.type !== 'info' && (
               <span
-                className={
-                  item.type === 'deduction' || item.amount < 0
-                    ? 'font-medium text-red-600'
-                    : 'font-medium text-gray-900'
-                }
+                className={`shrink-0 whitespace-nowrap font-medium ${
+                  item.type === 'deduction' || item.amount < 0 ? 'text-red-600' : 'text-gray-900'
+                }`}
               >
                 {item.type === 'deduction' && item.amount >= 0 ? '− ' : ''}
                 {formatCurrency(Math.abs(item.amount))}
@@ -102,7 +135,7 @@ export function CalculationBreakdown({ result }: { result: CalculationResult }) 
           </table>
         )}
         <p className="mt-4 text-xs text-gray-400">
-          Cálculo com regras vigentes a partir de {result.rulesVersion}.
+          Cálculo com regras vigentes a partir de {formatRulesVersion(result.rulesVersion)}.
         </p>
       </div>
     </div>

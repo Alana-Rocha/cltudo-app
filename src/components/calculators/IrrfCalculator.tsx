@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
 import { usePersistedState } from '@/hooks/usePersistedState';
+import { useLiveCalculation } from '@/hooks/useLiveCalculation';
 import { CurrencyInput } from '@/components/ui/CurrencyInput';
 import { NumberInput } from '@/components/ui/NumberInput';
 import { CalculationBreakdown } from '@/components/shared/CalculationBreakdown';
@@ -21,33 +21,29 @@ export function IrrfCalculator() {
   const [income, setIncome] = usePersistedState('calculadora-irrf:income', '');
   const [dependents, setDependents] = usePersistedState('calculadora-irrf:dependents', '0');
   const [alimony, setAlimony] = usePersistedState('calculadora-irrf:alimony', '');
-  const [result, setResult] = useState<CalculationResult | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  function compute(): CalculationResult | string {
     const incomeCents = toCents(parseBrNumber(income));
-    if (incomeCents <= 0) return setError('Informe um rendimento maior que zero.');
-    setError(null);
+    if (incomeCents <= 0) return 'Informe um rendimento maior que zero.';
     const rules = getRulesFor(new Date());
     const inss = calculateInss(incomeCents, rules);
-    setResult(
-      calculateIrrfStandalone(
-        {
-          taxableIncome: incomeCents,
-          inss: inss.total,
-          dependents: Number(dependents) || 0,
-          alimony: alimony ? toCents(parseBrNumber(alimony)) : undefined,
-        },
-        rules
-      )
+    return calculateIrrfStandalone(
+      {
+        taxableIncome: incomeCents,
+        inss: inss.total,
+        dependents: Number(dependents) || 0,
+        alimony: alimony ? toCents(parseBrNumber(alimony)) : undefined,
+      },
+      rules
     );
   }
+
+  const { result, error, handleSubmit, resultRef } = useLiveCalculation(compute());
 
   return (
     <div>
       <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border bg-white p-6">
-        <CurrencyInput id="income" label="Rendimento tributável (mensal)" value={income} onChange={setIncome} required error={error ?? undefined} />
+        <CurrencyInput id="income" label="Rendimento tributável (mensal)" value={income} onChange={setIncome} required error={error} />
         <NumberInput id="dependents" label="Número de dependentes" value={dependents} onChange={setDependents} min={0} />
         <CurrencyInput id="alimony" label="Pensão alimentícia (opcional)" value={alimony} onChange={setAlimony} />
         <p className="text-xs text-gray-400">
@@ -58,7 +54,9 @@ export function IrrfCalculator() {
           Calcular
         </button>
       </form>
-      {result && <CalculationBreakdown result={result} />}
+      <div ref={resultRef} className="scroll-mt-20">
+        {result && <CalculationBreakdown result={result} headline={{ label: 'IRRF retido na fonte', field: 'deductions' }} />}
+      </div>
       <Disclaimer />
     </div>
   );

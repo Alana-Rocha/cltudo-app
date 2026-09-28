@@ -1,6 +1,7 @@
 import type { RuleSet } from '@/rules/schema';
 import { add, divide, multiply, type Cents } from '@/lib/money';
 import type { CalculationResult } from './types';
+import { formatDecimal, formatPercent } from '@/lib/format';
 
 export type NightShiftInput = {
   grossSalary: Cents;
@@ -26,12 +27,12 @@ export function calculateNightShift(input: NightShiftInput, rules: RuleSet): Cal
 
   return {
     items: [
-      { key: 'base', label: 'Horas noturnas (convertidas pela hora reduzida)', amount: baseAmount, type: 'earning', explanation: `${input.nightHoursWorked}h × (60 ÷ ${rules.nightShift.reducedHourMinutes}min) × ${(hourlyRate / 100).toFixed(2)}` },
-      { key: 'additional', label: `Adicional noturno (${(rate * 100).toFixed(0)}%)`, amount: additional, type: 'earning', explanation: 'Sobre as horas noturnas convertidas', legalBasis: 'CLT art. 73' },
+      { key: 'base', label: 'Horas noturnas (convertidas pela hora reduzida)', amount: baseAmount, type: 'earning', explanation: `${input.nightHoursWorked}h × (60 ÷ ${rules.nightShift.reducedHourMinutes}min) × ${formatDecimal(hourlyRate / 100, 2)}` },
+      { key: 'additional', label: `Adicional noturno (${formatPercent(rate, 0)})`, amount: additional, type: 'earning', explanation: 'Sobre as horas noturnas convertidas', legalBasis: 'CLT art. 73' },
     ],
     totals: { gross: add(baseAmount, additional), deductions: 0, net: add(baseAmount, additional) },
     steps: [
-      { label: 'Valor-hora', formula: `${(input.grossSalary / 100).toFixed(2)} ÷ ${monthlyHours}h`, value: hourlyRate },
+      { label: 'Valor-hora', formula: `${formatDecimal(input.grossSalary / 100, 2)} ÷ ${monthlyHours}h`, value: hourlyRate },
       { label: 'Horas noturnas convertidas', formula: `${input.nightHoursWorked}h × (60/${rules.nightShift.reducedHourMinutes})`, value: Math.round(reducedHours * 100), unit: 'hours' },
     ],
     included: [],

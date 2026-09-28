@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
 import { usePersistedState } from '@/hooks/usePersistedState';
+import { useLiveCalculation } from '@/hooks/useLiveCalculation';
 import { CurrencyInput } from '@/components/ui/CurrencyInput';
+import { NumberInput } from '@/components/ui/NumberInput';
 import { CalculationBreakdown } from '@/components/shared/CalculationBreakdown';
 import { Disclaimer } from '@/components/shared/Disclaimer';
 import { calculateMaternityLeave } from '@/engine/maternityLeave';
@@ -18,21 +19,24 @@ function parseBrNumber(input: string): number {
 export function MaternityLeaveCalculator() {
   const [amount, setAmount] = usePersistedState('calculadora-salario-maternidade:amount', '');
   const [extended, setExtended] = usePersistedState('calculadora-salario-maternidade:extended', false);
-  const [result, setResult] = useState<CalculationResult | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [dependents, setDependents] = usePersistedState('calculadora-salario-maternidade:dependents', '0');
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  function compute(): CalculationResult | string {
     const cents = toCents(parseBrNumber(amount));
-    if (cents <= 0) return setError('Informe uma remuneração mensal maior que zero.');
-    setError(null);
-    setResult(calculateMaternityLeave({ monthlyAmount: cents, extendedProgram: extended }, getRulesFor(new Date())));
+    if (cents <= 0) return 'Informe uma remuneração mensal maior que zero.';
+    return calculateMaternityLeave(
+      { monthlyAmount: cents, extendedProgram: extended, dependents: Number(dependents) || 0 },
+      getRulesFor(new Date())
+    );
   }
+
+  const { result, error, handleSubmit, resultRef } = useLiveCalculation(compute());
 
   return (
     <div>
       <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border bg-white p-6">
-        <CurrencyInput id="amount" label="Remuneração mensal integral (empregada CLT)" value={amount} onChange={setAmount} required error={error ?? undefined} />
+        <CurrencyInput id="amount" label="Remuneração mensal integral (empregada CLT)" value={amount} onChange={setAmount} required error={error} />
+        <NumberInput id="dependents" label="Número de dependentes" value={dependents} onChange={setDependents} min={0} />
         <label className="flex items-center gap-2 text-sm">
           <input type="checkbox" checked={extended} onChange={(e) => setExtended(e.target.checked)} />
           Empresa participa do Programa Empresa Cidadã (180 dias)
@@ -41,7 +45,9 @@ export function MaternityLeaveCalculator() {
           Calcular
         </button>
       </form>
-      {result && <CalculationBreakdown result={result} />}
+      <div ref={resultRef} className="scroll-mt-20">
+        {result && <CalculationBreakdown result={result} headline={{ label: 'Total líquido do benefício' }} />}
+      </div>
       <Disclaimer />
     </div>
   );

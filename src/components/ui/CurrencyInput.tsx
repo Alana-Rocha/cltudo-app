@@ -9,9 +9,10 @@ type Props = {
   onChange: (value: string) => void;
   required?: boolean;
   error?: string;
+  hint?: string;
 };
 
-export function CurrencyInput({ id, label, value, onChange, required, error }: Props) {
+export function CurrencyInput({ id, label, value, onChange, required, error, hint }: Props) {
   return (
     <div>
       <label htmlFor={id} className="mb-1 block text-sm font-medium">
@@ -32,6 +33,7 @@ export function CurrencyInput({ id, label, value, onChange, required, error }: P
           placeholder="0,00"
         />
       </div>
+      {hint && <p className="mt-1 text-xs text-gray-400">{hint}</p>}
       {error && (
         <p id={`${id}-error`} className="mt-1 text-xs text-red-600">
           {error}

@@ -26,6 +26,22 @@ describe('calculateSalary', () => {
     );
     const vt = result.items.find((i) => i.key === 'vt')!;
     expect(vt.amount).toBe(Math.round(toCents(2000) * 0.06));
+    expect(vt.explanation).toContain('Limitado a 6%');
+  });
+
+  it('vale-transporte abaixo do teto desconta o custo real', () => {
+    const result = calculateSalary(
+      {
+        grossSalary: toCents(3000),
+        dependents: 0,
+        hasTransportVoucher: true,
+        transportVoucherValue: toCents(100),
+      },
+      ruleSet2026_01
+    );
+    const vt = result.items.find((i) => i.key === 'vt')!;
+    expect(vt.amount).toBe(toCents(100));
+    expect(vt.explanation).not.toContain('Limitado');
   });
 
   it('pensão alimentícia reduz o líquido e a base do IRRF', () => {

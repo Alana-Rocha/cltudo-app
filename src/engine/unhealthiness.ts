@@ -1,6 +1,7 @@
 import type { RuleSet } from '@/rules/schema';
 import { multiply, type Cents } from '@/lib/money';
 import type { CalculationResult } from './types';
+import { formatDecimal, formatPercent } from '@/lib/format';
 
 export type UnhealthinessGrade = 'low' | 'medium' | 'high';
 
@@ -25,10 +26,10 @@ export function calculateUnhealthiness(input: UnhealthinessInput, rules: RuleSet
 
   return {
     items: [
-      { key: 'unhealthiness', label: `Adicional de insalubridade — grau ${GRADE_LABEL[input.grade]}`, amount, type: 'earning', explanation: `${(base / 100).toFixed(2)} × ${(rate * 100).toFixed(0)}%`, legalBasis: 'CLT art. 192' },
+      { key: 'unhealthiness', label: `Adicional de insalubridade — grau ${GRADE_LABEL[input.grade]}`, amount, type: 'earning', explanation: `${formatDecimal(base / 100, 2)} × ${formatPercent(rate, 0)}`, legalBasis: 'CLT art. 192' },
     ],
     totals: { gross: amount, deductions: 0, net: amount },
-    steps: [{ label: 'Adicional de insalubridade', formula: `${(base / 100).toFixed(2)} × ${(rate * 100).toFixed(0)}%`, value: amount }],
+    steps: [{ label: 'Adicional de insalubridade', formula: `${formatDecimal(base / 100, 2)} × ${formatPercent(rate, 0)}`, value: amount }],
     included: [],
     excluded: [],
     warnings: input.base
