@@ -33,7 +33,7 @@ export function ProportionalSalaryCalculator() {
 
   return (
     <div className="calc-layout">
-      <form onSubmit={handleSubmit} className="card space-y-4 p-6">
+      <form onSubmit={handleSubmit} noValidate className="card space-y-4 p-6">
         <CurrencyInput id="salary" label="Salário mensal integral" value={salary} onChange={setSalary} required error={error} />
         <NumberInput id="daysWorked" label="Dias trabalhados no mês" value={daysWorked} onChange={setDaysWorked} min={1} max={30} />
         <NumberInput id="dependents" label="Número de dependentes" value={dependents} onChange={setDependents} min={0} />

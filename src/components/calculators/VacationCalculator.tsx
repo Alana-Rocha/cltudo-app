@@ -47,7 +47,7 @@ export function VacationCalculator() {
 
   return (
     <div className="calc-layout">
-      <form onSubmit={handleSubmit} className="card space-y-4 p-6">
+      <form onSubmit={handleSubmit} noValidate className="card space-y-4 p-6">
         <CurrencyInput id="gross" label="Salário bruto" value={gross} onChange={setGross} required error={errorFor('gross')} />
         <CurrencyInput
           id="averageVariables"

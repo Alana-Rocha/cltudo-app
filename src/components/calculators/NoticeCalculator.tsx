@@ -32,8 +32,8 @@ export function NoticeCalculator() {
 
   return (
     <div className="calc-layout">
-      <form onSubmit={handleSubmit} className="card space-y-4 p-6">
-        <div className="grid grid-cols-2 gap-4">
+      <form onSubmit={handleSubmit} noValidate className="card space-y-4 p-6">
+        <div className="grid gap-4 sm:grid-cols-2">
           <DateInput id="admission" label="Data de admissão" value={admissionDate} onChange={setAdmissionDate} error={errorFor('admission')} />
           <DateInput id="reference" label="Data de desligamento" value={referenceDate} onChange={setReferenceDate} error={errorFor('reference')} />
         </div>

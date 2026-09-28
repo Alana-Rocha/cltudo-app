@@ -65,7 +65,7 @@ export function CltVsPjCalculator() {
 
   return (
     <div className="calc-layout">
-      <form onSubmit={handleSubmit} className="card space-y-4 p-6">
+      <form onSubmit={handleSubmit} noValidate className="card space-y-4 p-6">
         <fieldset className="space-y-4">
           <legend className="text-sm font-semibold">Proposta CLT</legend>
           <CurrencyInput id="cltGross" label="Salário bruto mensal" value={cltGross} onChange={setCltGross} required error={errorFor('cltGross')} />

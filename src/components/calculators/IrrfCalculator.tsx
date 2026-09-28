@@ -42,7 +42,7 @@ export function IrrfCalculator() {
 
   return (
     <div className="calc-layout">
-      <form onSubmit={handleSubmit} className="card space-y-4 p-6">
+      <form onSubmit={handleSubmit} noValidate className="card space-y-4 p-6">
         <CurrencyInput id="income" label="Rendimento tributável (mensal)" value={income} onChange={setIncome} required error={error} />
         <NumberInput id="dependents" label="Número de dependentes" value={dependents} onChange={setDependents} min={0} />
         <CurrencyInput id="alimony" label="Pensão alimentícia (opcional)" value={alimony} onChange={setAlimony} />

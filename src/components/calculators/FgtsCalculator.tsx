@@ -3,6 +3,7 @@
 import { usePersistedState } from '@/hooks/usePersistedState';
 import { useLiveCalculation } from '@/hooks/useLiveCalculation';
 import { CurrencyInput } from '@/components/ui/CurrencyInput';
+import { Checkbox } from '@/components/ui/Checkbox';
 import { Select } from '@/components/ui/Select';
 import { NumberInput } from '@/components/ui/NumberInput';
 import { CalculationBreakdown } from '@/components/shared/CalculationBreakdown';
@@ -60,13 +61,12 @@ export function FgtsCalculator() {
 
   return (
     <div className="calc-layout">
-      <form onSubmit={handleSubmit} className="card space-y-4 p-6">
+      <form onSubmit={handleSubmit} noValidate className="card space-y-4 p-6">
         <CurrencyInput id="salary" label="Salário bruto" value={salary} onChange={setSalary} required error={error} />
 
-        <label className="flex items-center gap-2 text-sm">
-          <input type="checkbox" checked={showRescission} onChange={(e) => setShowRescission(e.target.checked)} />
+        <Checkbox checked={showRescission} onChange={setShowRescission}>
           Também quero estimar a multa rescisória
-        </label>
+        </Checkbox>
 
         {showRescission && (
           <div className="space-y-4 border-t pt-4">

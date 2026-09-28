@@ -31,7 +31,7 @@ export function UnhealthinessCalculator() {
 
   return (
     <div className="calc-layout">
-      <form onSubmit={handleSubmit} className="card space-y-4 p-6">
+      <form onSubmit={handleSubmit} noValidate className="card space-y-4 p-6">
         <Select<UnhealthinessGrade>
           id="grade"
           label="Grau de insalubridade"

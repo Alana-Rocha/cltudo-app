@@ -3,6 +3,7 @@
 import { usePersistedState } from '@/hooks/usePersistedState';
 import { useLiveCalculation } from '@/hooks/useLiveCalculation';
 import { CurrencyInput } from '@/components/ui/CurrencyInput';
+import { Checkbox } from '@/components/ui/Checkbox';
 import { NumberInput } from '@/components/ui/NumberInput';
 import { CalculationBreakdown } from '@/components/shared/CalculationBreakdown';
 import { Disclaimer } from '@/components/shared/Disclaimer';
@@ -34,13 +35,12 @@ export function MaternityLeaveCalculator() {
 
   return (
     <div className="calc-layout">
-      <form onSubmit={handleSubmit} className="card space-y-4 p-6">
+      <form onSubmit={handleSubmit} noValidate className="card space-y-4 p-6">
         <CurrencyInput id="amount" label="Remuneração mensal integral (empregada CLT)" value={amount} onChange={setAmount} required error={error} />
         <NumberInput id="dependents" label="Número de dependentes" value={dependents} onChange={setDependents} min={0} />
-        <label className="flex items-center gap-2 text-sm">
-          <input type="checkbox" checked={extended} onChange={(e) => setExtended(e.target.checked)} />
+        <Checkbox checked={extended} onChange={setExtended}>
           Empresa participa do Programa Empresa Cidadã (180 dias)
-        </label>
+        </Checkbox>
         <button type="submit" className="w-full rounded-md bg-brand-600 py-2 font-medium text-white hover:bg-brand-700">
           Calcular
         </button>

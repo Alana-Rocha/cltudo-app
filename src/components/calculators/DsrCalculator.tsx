@@ -34,7 +34,7 @@ export function DsrCalculator() {
 
   return (
     <div className="calc-layout">
-      <form onSubmit={handleSubmit} className="card space-y-4 p-6">
+      <form onSubmit={handleSubmit} noValidate className="card space-y-4 p-6">
         <CurrencyInput id="variable" label="Remuneração variável no mês (comissões, etc.)" value={variableAmount} onChange={setVariableAmount} required error={error} />
         <div className="grid grid-cols-2 gap-4">
           <NumberInput id="workingDays" label="Dias úteis no mês" value={workingDays} onChange={setWorkingDays} min={1} max={31} />

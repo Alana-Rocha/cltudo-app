@@ -44,7 +44,7 @@ export function EmployerCostCalculator() {
 
   return (
     <div className="calc-layout">
-      <form onSubmit={handleSubmit} className="card space-y-4 p-6">
+      <form onSubmit={handleSubmit} noValidate className="card space-y-4 p-6">
         <CurrencyInput id="salary" label="Salário bruto do funcionário" value={salary} onChange={setSalary} required error={error} />
 
         <Select<EmployerRegime>

@@ -35,10 +35,10 @@ export function NightShiftCalculator() {
 
   return (
     <div className="calc-layout">
-      <form onSubmit={handleSubmit} className="card space-y-4 p-6">
+      <form onSubmit={handleSubmit} noValidate className="card space-y-4 p-6">
         <CurrencyInput id="salary" label="Salário bruto" value={salary} onChange={setSalary} required error={error} />
-        <NumberInput id="monthlyHours" label="Jornada mensal (horas)" value={monthlyHours} onChange={setMonthlyHours} min={1} />
-        <NumberInput id="nightHours" label="Horas trabalhadas no período noturno (22h–5h)" value={nightHours} onChange={setNightHours} min={0} />
+        <NumberInput id="monthlyHours" decimal label="Jornada mensal (horas)" value={monthlyHours} onChange={setMonthlyHours} min={1} />
+        <NumberInput id="nightHours" decimal label="Horas trabalhadas no período noturno (22h–5h)" value={nightHours} onChange={setNightHours} min={0} />
         <button type="submit" className="w-full rounded-md bg-brand-600 py-2 font-medium text-white hover:bg-brand-700">
           Calcular
         </button>

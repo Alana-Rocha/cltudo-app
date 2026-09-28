@@ -38,7 +38,7 @@ export function UnemploymentInsuranceCalculator() {
 
   return (
     <div className="calc-layout">
-      <form onSubmit={handleSubmit} className="card space-y-4 p-6">
+      <form onSubmit={handleSubmit} noValidate className="card space-y-4 p-6">
         <div className="grid grid-cols-3 gap-4">
           <CurrencyInput id="s1" label="Salário 1" value={s1} onChange={setS1} required error={error} />
           <CurrencyInput id="s2" label="Salário 2" value={s2} onChange={setS2} />

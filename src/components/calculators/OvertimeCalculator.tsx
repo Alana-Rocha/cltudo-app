@@ -46,12 +46,12 @@ export function OvertimeCalculator() {
 
   return (
     <div className="calc-layout">
-      <form onSubmit={handleSubmit} className="card space-y-4 p-6">
+      <form onSubmit={handleSubmit} noValidate className="card space-y-4 p-6">
         <CurrencyInput id="gross" label="Salário bruto" value={gross} onChange={setGross} required error={error} />
-        <NumberInput id="monthlyHours" label="Jornada mensal (horas)" value={monthlyHours} onChange={setMonthlyHours} min={1} hint="Padrão: 220h" />
+        <NumberInput id="monthlyHours" decimal label="Jornada mensal (horas)" value={monthlyHours} onChange={setMonthlyHours} min={1} hint="Padrão: 220h" />
         <div className="grid grid-cols-2 gap-4">
-          <NumberInput id="hours50" label="Horas extras a 50%" value={hours50} onChange={setHours50} min={0} />
-          <NumberInput id="hours100" label="Horas extras a 100%" value={hours100} onChange={setHours100} min={0} />
+          <NumberInput id="hours50" decimal label="Horas extras a 50%" value={hours50} onChange={setHours50} min={0} />
+          <NumberInput id="hours100" decimal label="Horas extras a 100%" value={hours100} onChange={setHours100} min={0} />
         </div>
         <div className="grid grid-cols-2 gap-4">
           <NumberInput id="workingDays" label="Dias úteis no mês" value={workingDays} onChange={setWorkingDays} min={1} max={31} />

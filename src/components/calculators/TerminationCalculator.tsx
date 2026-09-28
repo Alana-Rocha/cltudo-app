@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { usePersistedState } from '@/hooks/usePersistedState';
 import { useLiveCalculation, type FieldError } from '@/hooks/useLiveCalculation';
 import { CurrencyInput } from '@/components/ui/CurrencyInput';
+import { Checkbox } from '@/components/ui/Checkbox';
 import { NumberInput } from '@/components/ui/NumberInput';
 import { Select } from '@/components/ui/Select';
 import { DateInput } from '@/components/ui/DateInput';
@@ -113,8 +114,8 @@ export function TerminationCalculator() {
 
   return (
     <div className="calc-layout">
-      <form onSubmit={handleSubmit} className="card space-y-4 p-6">
-        <div className="grid grid-cols-2 gap-4">
+      <form onSubmit={handleSubmit} noValidate className="card space-y-4 p-6">
+        <div className="grid gap-4 sm:grid-cols-2">
           <DateInput id="admission" label="Data de admissão" value={admissionDate} onChange={setAdmissionDate} error={errorFor('admission')} />
           <DateInput id="termination" label="Data de desligamento" value={terminationDate} onChange={setTerminationDate} error={errorFor('termination')} />
         </div>
@@ -160,21 +161,13 @@ export function TerminationCalculator() {
         <CurrencyInput id="fgts" label="Saldo do FGTS (opcional, para um valor exato)" value={fgtsBalance} onChange={setFgtsBalance} />
 
         <div className="space-y-4 rounded-md border border-dashed p-4">
-          <label className="flex items-start gap-2 text-sm">
-            <input
-              type="checkbox"
-              className="mt-0.5"
-              checked={hasExpiredVacation}
-              onChange={(e) => setHasExpiredVacation(e.target.checked)}
-            />
-            <span>
-              <span className="font-medium">Tenho férias vencidas</span>
-              <span className="block text-xs text-gray-500">
-                Marque só se você já completou um período aquisitivo de 12 meses e ainda não tirou todos os dias
-                de férias dele. As férias proporcionais do período atual já entram no cálculo.
-              </span>
-            </span>
-          </label>
+          <Checkbox
+            checked={hasExpiredVacation}
+            onChange={setHasExpiredVacation}
+            description="Marque só se você já completou um período aquisitivo de 12 meses e ainda não tirou todos os dias de férias dele. As férias proporcionais do período atual já entram no cálculo."
+          >
+            Tenho férias vencidas
+          </Checkbox>
           {hasExpiredVacation && (
             <>
               <div className="grid grid-cols-2 gap-4">
@@ -199,14 +192,9 @@ export function TerminationCalculator() {
                   hint="Sugerido como 30 − dias já gozados; ajuste se o período vencido não for de 30 dias."
                 />
               </div>
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={expiredVacationDoubled}
-                  onChange={(e) => setExpiredVacationDoubled(e.target.checked)}
-                />
+              <Checkbox checked={expiredVacationDoubled} onChange={setExpiredVacationDoubled}>
                 Período concessivo (12 meses após vencer) já expirou — pagar em dobro (Súmula 450 TST)
-              </label>
+              </Checkbox>
             </>
           )}
         </div>

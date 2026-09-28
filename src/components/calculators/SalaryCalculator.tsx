@@ -3,6 +3,7 @@
 import { usePersistedState } from '@/hooks/usePersistedState';
 import { useLiveCalculation } from '@/hooks/useLiveCalculation';
 import { CurrencyInput } from '@/components/ui/CurrencyInput';
+import { Checkbox } from '@/components/ui/Checkbox';
 import { NumberInput } from '@/components/ui/NumberInput';
 import { CalculationBreakdown } from '@/components/shared/CalculationBreakdown';
 import { SalaryCompositionBar } from '@/components/shared/SalaryCompositionBar';
@@ -53,7 +54,7 @@ export function SalaryCalculator() {
 
   return (
     <div className="calc-layout">
-      <form onSubmit={handleSubmit} className="card space-y-4 p-6">
+      <form onSubmit={handleSubmit} noValidate className="card space-y-4 p-6">
         <CurrencyInput id="gross" label="Salário bruto" value={gross} onChange={setGross} required error={error} />
         <NumberInput id="dependents" label="Número de dependentes" value={dependents} onChange={setDependents} min={0} />
 
@@ -68,10 +69,9 @@ export function SalaryCalculator() {
         {showMore && (
           <div className="space-y-4 border-t pt-4">
             <CurrencyInput id="alimony" label="Pensão alimentícia (opcional)" value={alimony} onChange={setAlimony} />
-            <label className="flex items-center gap-2 text-sm">
-              <input type="checkbox" checked={hasVt} onChange={(e) => setHasVt(e.target.checked)} />
+            <Checkbox checked={hasVt} onChange={setHasVt}>
               Recebo vale-transporte
-            </label>
+            </Checkbox>
             {hasVt && (
               <div className="space-y-3">
                 <CurrencyInput id="vt" label="Valor da passagem (por trecho)" value={vtValue} onChange={setVtValue} />

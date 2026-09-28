@@ -34,10 +34,10 @@ export function CompTimeCalculator() {
 
   return (
     <div className="calc-layout">
-      <form onSubmit={handleSubmit} className="card space-y-4 p-6">
+      <form onSubmit={handleSubmit} noValidate className="card space-y-4 p-6">
         <CurrencyInput id="salary" label="Salário bruto" value={salary} onChange={setSalary} required error={error} />
-        <NumberInput id="monthlyHours" label="Jornada mensal (horas)" value={monthlyHours} onChange={setMonthlyHours} min={1} />
-        <NumberInput id="balance" label="Saldo de horas (negativo se você deve horas)" value={balance} onChange={setBalance} />
+        <NumberInput id="monthlyHours" decimal label="Jornada mensal (horas)" value={monthlyHours} onChange={setMonthlyHours} min={1} />
+        <NumberInput id="balance" decimal negative label="Saldo de horas (negativo se você deve horas)" value={balance} onChange={setBalance} />
         <button type="submit" className="w-full rounded-md bg-brand-600 py-2 font-medium text-white hover:bg-brand-700">
           Calcular
         </button>

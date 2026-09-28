@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { ArrowRight, Search } from 'lucide-react';
+import { ArrowRight, Search, X } from 'lucide-react';
 import { categories, registry, type CalculatorEntry } from '@/registry';
 import { CalculatorIcon } from '@/components/ui/CalculatorIcon';
 
@@ -97,8 +97,21 @@ export function CalculatorDirectory({ rulesLabel }: { rulesLabel: string }) {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Buscar: férias, rescisão, hora extra…"
-            className="w-full border-0 bg-transparent py-3.5 text-base focus:outline-none"
+            className="w-full border-0 bg-transparent py-3.5 text-base focus:outline-none [&::-webkit-search-cancel-button]:appearance-none"
           />
+          {query && (
+            <button
+              type="button"
+              onClick={() => {
+                setQuery('');
+                document.getElementById('calc-search')?.focus();
+              }}
+              aria-label="Limpar busca"
+              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
+            >
+              <X className="h-4 w-4" aria-hidden="true" />
+            </button>
+          )}
         </div>
       </section>
 

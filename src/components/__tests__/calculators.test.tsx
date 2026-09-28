@@ -22,6 +22,8 @@ function money(cents: number) {
   return formatCurrency(cents).replace(/\s/g, ' ');
 }
 
+const dateField = (label: RegExp) => screen.getByRole('textbox', { name: label });
+
 function type(label: RegExp, value: string) {
   fireEvent.change(screen.getByLabelText(label), { target: { value } });
 }
@@ -66,8 +68,8 @@ describe('SalaryCalculator', () => {
 
 describe('TerminationCalculator', () => {
   function fillDates(admission: string, termination: string) {
-    type(/Data de admissão/, admission);
-    type(/Data de desligamento/, termination);
+    fireEvent.change(dateField(/Data de admissão/), { target: { value: admission } });
+    fireEvent.change(dateField(/Data de desligamento/), { target: { value: termination } });
     type(/^Salário bruto/, '300000');
   }
 
@@ -76,7 +78,7 @@ describe('TerminationCalculator', () => {
     type(/^Salário bruto/, '300000');
     fireEvent.submit(screen.getByRole('button', { name: 'Calcular' }).closest('form')!);
 
-    const admission = screen.getByLabelText(/Data de admissão/);
+    const admission = dateField(/Data de admissão/);
     expect(admission.getAttribute('aria-invalid')).toBe('true');
     expect(screen.getByLabelText(/^Salário bruto/).getAttribute('aria-invalid')).toBe('false');
   });
@@ -133,6 +135,19 @@ describe('VacationCalculator', () => {
 
     expect(screen.getByLabelText(/Dias de abono/).getAttribute('aria-invalid')).toBe('true');
     expect(screen.getByText(/não pode ultrapassar 30/)).toBeTruthy();
+  });
+});
+
+describe('validação sem balões do navegador', () => {
+  it('12 dias vendidos: o formulário envia e mostra a mensagem do app', () => {
+    render(<VacationCalculator />);
+    type(/^Salário bruto/, '300000');
+    type(/Dias de abono/, '12');
+    const form = screen.getByRole('button', { name: 'Calcular' }).closest('form')!;
+    expect(form.noValidate).toBe(true);
+
+    fireEvent.submit(form);
+    expect(screen.getByText('É possível vender no máximo 10 dias.')).toBeTruthy();
   });
 });
 

@@ -49,7 +49,7 @@ export function RaiseCalculator() {
 
   return (
     <div className="calc-layout">
-      <form onSubmit={handleSubmit} className="card space-y-4 p-6">
+      <form onSubmit={handleSubmit} noValidate className="card space-y-4 p-6">
         <CurrencyInput id="current" label="Salário bruto atual" value={current} onChange={setCurrent} required error={errorFor('current')} />
 
         <Select<RaiseMode>
@@ -65,7 +65,7 @@ export function RaiseCalculator() {
         />
 
         {mode === 'percent' && (
-          <NumberInput id="percent" label="Aumento (%)" value={percent} onChange={setPercent} min={0} error={errorFor('percent')} />
+          <NumberInput id="percent" decimal label="Aumento (%)" value={percent} onChange={setPercent} min={0} error={errorFor('percent')} />
         )}
         {mode === 'amount' && (
           <CurrencyInput id="amount" label="Aumento bruto (R$)" value={amount} onChange={setAmount} error={errorFor('amount')} />
