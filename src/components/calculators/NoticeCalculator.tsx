@@ -3,6 +3,7 @@
 import { usePersistedState } from '@/hooks/usePersistedState';
 import { useLiveCalculation, type FieldError } from '@/hooks/useLiveCalculation';
 import { NumberInput } from '@/components/ui/NumberInput';
+import { Select } from '@/components/ui/Select';
 import { DateInput } from '@/components/ui/DateInput';
 import { CalculationBreakdown } from '@/components/shared/CalculationBreakdown';
 import { Disclaimer } from '@/components/shared/Disclaimer';
@@ -36,15 +37,16 @@ export function NoticeCalculator() {
           <DateInput id="admission" label="Data de admissão" value={admissionDate} onChange={setAdmissionDate} error={errorFor('admission')} />
           <DateInput id="reference" label="Data de desligamento" value={referenceDate} onChange={setReferenceDate} error={errorFor('reference')} />
         </div>
-        <div>
-          <label htmlFor="reason" className="mb-1 block text-sm font-medium">
-            Motivo
-          </label>
-          <select id="reason" value={reason} onChange={(e) => setReason(e.target.value as typeof reason)} className="w-full rounded-md border px-3 py-2">
-            <option value="without_cause">Dispensa sem justa causa (pelo empregador)</option>
-            <option value="employee_resignation">Pedido de demissão</option>
-          </select>
-        </div>
+        <Select<typeof reason>
+          id="reason"
+          label="Motivo"
+          value={reason}
+          onChange={setReason}
+          options={[
+            { value: 'without_cause', label: 'Dispensa sem justa causa (pelo empregador)' },
+            { value: 'employee_resignation', label: 'Pedido de demissão' },
+          ]}
+        />
         <button type="submit" className="w-full rounded-md bg-brand-600 py-2 font-medium text-white hover:bg-brand-700">
           Calcular
         </button>

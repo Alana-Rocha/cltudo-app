@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import { categories, registry } from '@/registry';
 import { Logo } from '@/components/ui/Logo';
+import { CookiePreferencesButton } from '@/components/shared/CookieBanner';
+import { site } from '@/config/site';
 
 export function SiteFooter() {
   return (
@@ -30,6 +32,15 @@ export function SiteFooter() {
             </ul>
           </div>
         ))}
+      </div>
+      <div className="border-t">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-4 text-xs text-gray-500">
+          <span>© {new Date().getFullYear()} {site.name}</span>
+          <Link href="/privacidade" className="hover:text-brand-700">
+            Política de privacidade
+          </Link>
+          <CookiePreferencesButton className="hover:text-brand-700" />
+        </div>
       </div>
     </footer>
   );

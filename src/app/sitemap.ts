@@ -1,11 +1,13 @@
 import type { MetadataRoute } from 'next';
 import { registry } from '@/registry';
+import { site } from '@/config/site';
 
-const BASE_URL = process.env.SITE_URL ?? 'https://cltudo.example.com';
+const BASE_URL = site.url;
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const staticEntries: MetadataRoute.Sitemap = [
     { url: BASE_URL, changeFrequency: 'monthly', priority: 1 },
+    { url: `${BASE_URL}/privacidade`, changeFrequency: 'yearly', priority: 0.2 },
   ];
 
   const calculatorEntries: MetadataRoute.Sitemap = registry

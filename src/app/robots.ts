@@ -1,10 +1,9 @@
 import type { MetadataRoute } from 'next';
-
-const BASE_URL = process.env.SITE_URL ?? 'https://cltudo.example.com';
+import { site } from '@/config/site';
 
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: { userAgent: '*', allow: '/' },
-    sitemap: `${BASE_URL}/sitemap.xml`,
+    sitemap: `${site.url}/sitemap.xml`,
   };
 }

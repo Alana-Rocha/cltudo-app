@@ -7,6 +7,9 @@ import { RelatedCalculators } from '@/components/shared/RelatedCalculators';
 import { Breadcrumb } from '@/components/shared/Breadcrumb';
 import { SiteNav } from '@/components/shared/SiteNav';
 import { SiteFooter } from '@/components/shared/SiteFooter';
+import { AdSlot } from '@/components/shared/AdSlot';
+import { CookieBanner } from '@/components/shared/CookieBanner';
+import { ThirdPartyScripts } from '@/components/shared/ThirdPartyScripts';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'], display: 'swap' });
@@ -63,9 +66,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <main className="mx-auto max-w-6xl px-4 py-8 sm:py-10">
           <Breadcrumb />
           {children}
+          <AdSlot />
           <RelatedCalculators />
         </main>
         <SiteFooter />
+        <CookieBanner />
+        <ThirdPartyScripts />
       </body>
     </html>
   );

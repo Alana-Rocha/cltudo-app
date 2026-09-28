@@ -3,6 +3,7 @@
 import { usePersistedState } from '@/hooks/usePersistedState';
 import { useLiveCalculation } from '@/hooks/useLiveCalculation';
 import { CurrencyInput } from '@/components/ui/CurrencyInput';
+import { Select } from '@/components/ui/Select';
 import { NumberInput } from '@/components/ui/NumberInput';
 import { CalculationBreakdown } from '@/components/shared/CalculationBreakdown';
 import { Disclaimer } from '@/components/shared/Disclaimer';
@@ -69,18 +70,7 @@ export function FgtsCalculator() {
 
         {showRescission && (
           <div className="space-y-4 border-t pt-4">
-            <div>
-              <label htmlFor="type" className="mb-1 block text-sm font-medium">
-                Tipo de desligamento
-              </label>
-              <select id="type" value={terminationType} onChange={(e) => setTerminationType(e.target.value as TerminationType)} className="w-full rounded-md border px-3 py-2">
-                {TERMINATION_TYPES.map((t) => (
-                  <option key={t.value} value={t.value}>
-                    {t.label}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <Select id="type" label="Tipo de desligamento" value={terminationType} onChange={setTerminationType} options={TERMINATION_TYPES} />
             <NumberInput id="months" label="Meses de contrato" value={months} onChange={setMonths} min={1} />
             <CurrencyInput id="actualBalance" label="Saldo real do FGTS (opcional, para um valor exato)" value={actualBalance} onChange={setActualBalance} />
           </div>

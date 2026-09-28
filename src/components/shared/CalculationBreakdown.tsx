@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { formatCurrency, formatDecimal } from '@/lib/format';
 import type { CalculationResult, LineItem } from '@/engine/types';
 import { ResultActions } from './ResultActions';
+import { SponsoredOffer } from './SponsoredOffer';
 
 function formatStepValue(value: number, unit: 'currency' | 'days' | 'hours' | undefined): string {
   if (unit === 'days') return `${value} dia${value === 1 ? '' : 's'}`;
@@ -157,6 +158,8 @@ export function CalculationBreakdown({
           )}
         </div>
       )}
+
+      <SponsoredOffer />
 
       <div className="border-t p-6">
         <button

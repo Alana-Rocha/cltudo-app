@@ -89,6 +89,22 @@ describe('TerminationCalculator', () => {
     expect(screen.getByText(/só há regras de INSS e IRRF/)).toBeTruthy();
   });
 
+  it('"não cumprido" some da conta ao trocar o pedido de demissão por outro tipo', () => {
+    render(<TerminationCalculator />);
+    fillDates('01/03/2026', '20/08/2026');
+    const pick = (label: RegExp, option: string) => {
+      fireEvent.click(screen.getByRole('combobox', { name: label }));
+      fireEvent.click(screen.getByRole('option', { name: option }));
+    };
+    pick(/Tipo de desligamento/, 'Pedido de demissão');
+    pick(/Aviso prévio/, 'Não cumprido pelo empregado');
+    expect(screen.getByText('Desconto de aviso prévio não cumprido')).toBeTruthy();
+
+    pick(/Tipo de desligamento/, 'Sem justa causa (empregador)');
+    expect(screen.queryByText('Desconto de aviso prévio não cumprido')).toBeNull();
+    expect(screen.getByRole('combobox', { name: /Aviso prévio/ }).textContent).toContain('Indenizado');
+  });
+
   it('férias vencidas só entram quando a pessoa marca que tem', () => {
     render(<TerminationCalculator />);
     fillDates('01/03/2026', '20/08/2026');

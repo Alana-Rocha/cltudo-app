@@ -3,6 +3,7 @@
 import { usePersistedState } from '@/hooks/usePersistedState';
 import { useLiveCalculation } from '@/hooks/useLiveCalculation';
 import { CurrencyInput } from '@/components/ui/CurrencyInput';
+import { Select } from '@/components/ui/Select';
 import { NumberInput } from '@/components/ui/NumberInput';
 import { CalculationBreakdown } from '@/components/shared/CalculationBreakdown';
 import { Disclaimer } from '@/components/shared/Disclaimer';
@@ -43,16 +44,17 @@ export function UnemploymentInsuranceCalculator() {
           <CurrencyInput id="s2" label="Salário 2" value={s2} onChange={setS2} />
           <CurrencyInput id="s3" label="Salário 3" value={s3} onChange={setS3} />
         </div>
-        <div>
-          <label htmlFor="requestNumber" className="mb-1 block text-sm font-medium">
-            Número da solicitação
-          </label>
-          <select id="requestNumber" value={requestNumber} onChange={(e) => setRequestNumber(e.target.value)} className="w-full rounded-md border px-3 py-2">
-            <option value="1">1ª solicitação</option>
-            <option value="2">2ª solicitação</option>
-            <option value="3">3ª solicitação ou mais</option>
-          </select>
-        </div>
+        <Select
+          id="requestNumber"
+          label="Número da solicitação"
+          value={requestNumber}
+          onChange={setRequestNumber}
+          options={[
+            { value: '1', label: '1ª solicitação' },
+            { value: '2', label: '2ª solicitação' },
+            { value: '3', label: '3ª solicitação ou mais' },
+          ]}
+        />
         <NumberInput id="monthsWorked" label="Meses trabalhados no período exigido" value={monthsWorked} onChange={setMonthsWorked} min={0} />
         <button type="submit" className="w-full rounded-md bg-brand-600 py-2 font-medium text-white hover:bg-brand-700">
           Calcular

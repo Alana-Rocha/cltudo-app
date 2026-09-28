@@ -5,6 +5,7 @@ import { usePersistedState } from '@/hooks/usePersistedState';
 import { useLiveCalculation, type FieldError } from '@/hooks/useLiveCalculation';
 import { CurrencyInput } from '@/components/ui/CurrencyInput';
 import { NumberInput } from '@/components/ui/NumberInput';
+import { Select } from '@/components/ui/Select';
 import { DateInput } from '@/components/ui/DateInput';
 import { CalculationBreakdown } from '@/components/shared/CalculationBreakdown';
 import { Disclaimer } from '@/components/shared/Disclaimer';
@@ -35,6 +36,9 @@ export function TerminationCalculator() {
   const [averageVariables, setAverageVariables] = usePersistedState('calculadora-rescisao:averageVariables', '');
   const [terminationType, setTerminationType] = usePersistedState<TerminationType>('calculadora-rescisao:terminationType', 'without_cause');
   const [noticeMode, setNoticeMode] = usePersistedState<NoticeMode>('calculadora-rescisao:noticeMode', 'indemnified');
+  // "Não cumprido" só existe no pedido de demissão; ao trocar o tipo, volta para indenizado.
+  const effectiveNoticeMode: NoticeMode =
+    noticeMode === 'not_fulfilled_by_employee' && terminationType !== 'employee_resignation' ? 'indemnified' : noticeMode;
   const [daysWorked, setDaysWorked] = usePersistedState('calculadora-rescisao:daysWorked', '30');
   const [daysWorkedTouched, setDaysWorkedTouched] = usePersistedState('calculadora-rescisao:daysWorkedTouched', false);
   const [dependents, setDependents] = usePersistedState('calculadora-rescisao:dependents', '0');
@@ -94,7 +98,7 @@ export function TerminationCalculator() {
         grossSalary: grossCents,
         averageVariables: averageVariables ? toCents(parseBrNumber(averageVariables)) : undefined,
         terminationType,
-        noticeMode,
+        noticeMode: effectiveNoticeMode,
         dependents: Number(dependents) || 0,
         daysWorkedInLastMonth: Number(daysWorked) || 0,
         actualFgtsBalance: fgtsBalance ? toCents(parseBrNumber(fgtsBalance)) : undefined,
@@ -124,41 +128,21 @@ export function TerminationCalculator() {
           hint="Horas extras, comissões e adicionais recebidos com frequência — média dos últimos 12 meses. Entra no aviso indenizado, 13º, férias e FGTS."
         />
 
-        <div>
-          <label htmlFor="type" className="mb-1 block text-sm font-medium">
-            Tipo de desligamento
-          </label>
-          <select
-            id="type"
-            value={terminationType}
-            onChange={(e) => setTerminationType(e.target.value as TerminationType)}
-            className="w-full rounded-md border px-3 py-2"
-          >
-            {TERMINATION_TYPES.map((t) => (
-              <option key={t.value} value={t.value}>
-                {t.label}
-              </option>
-            ))}
-          </select>
-        </div>
+        <Select id="type" label="Tipo de desligamento" value={terminationType} onChange={setTerminationType} options={TERMINATION_TYPES} />
 
-        <div>
-          <label htmlFor="noticeMode" className="mb-1 block text-sm font-medium">
-            Aviso prévio
-          </label>
-          <select
-            id="noticeMode"
-            value={noticeMode}
-            onChange={(e) => setNoticeMode(e.target.value as NoticeMode)}
-            className="w-full rounded-md border px-3 py-2"
-          >
-            <option value="indemnified">Indenizado</option>
-            <option value="worked">Trabalhado</option>
-            {terminationType === 'employee_resignation' && (
-              <option value="not_fulfilled_by_employee">Não cumprido pelo empregado</option>
-            )}
-          </select>
-        </div>
+        <Select
+          id="noticeMode"
+          label="Aviso prévio"
+          value={effectiveNoticeMode}
+          onChange={setNoticeMode}
+          options={[
+            { value: 'indemnified', label: 'Indenizado' },
+            { value: 'worked', label: 'Trabalhado' },
+            ...(terminationType === 'employee_resignation'
+              ? [{ value: 'not_fulfilled_by_employee' as const, label: 'Não cumprido pelo empregado' }]
+              : []),
+          ]}
+        />
 
         <NumberInput
           id="daysWorked"

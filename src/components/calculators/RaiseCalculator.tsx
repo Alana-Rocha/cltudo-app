@@ -3,6 +3,7 @@
 import { usePersistedState } from '@/hooks/usePersistedState';
 import { useLiveCalculation, type FieldError } from '@/hooks/useLiveCalculation';
 import { CurrencyInput } from '@/components/ui/CurrencyInput';
+import { Select } from '@/components/ui/Select';
 import { NumberInput } from '@/components/ui/NumberInput';
 import { CalculationBreakdown } from '@/components/shared/CalculationBreakdown';
 import { Disclaimer } from '@/components/shared/Disclaimer';
@@ -51,16 +52,17 @@ export function RaiseCalculator() {
       <form onSubmit={handleSubmit} className="card space-y-4 p-6">
         <CurrencyInput id="current" label="Salário bruto atual" value={current} onChange={setCurrent} required error={errorFor('current')} />
 
-        <div>
-          <label htmlFor="mode" className="mb-1 block text-sm font-medium">
-            Como você quer informar o aumento?
-          </label>
-          <select id="mode" value={mode} onChange={(e) => setMode(e.target.value as RaiseMode)} className="w-full rounded-md border px-3 py-2">
-            <option value="percent">Percentual (%)</option>
-            <option value="amount">Valor em reais a mais</option>
-            <option value="newSalary">Novo salário bruto</option>
-          </select>
-        </div>
+        <Select<RaiseMode>
+          id="mode"
+          label="Como você quer informar o aumento?"
+          value={mode}
+          onChange={setMode}
+          options={[
+            { value: 'percent', label: 'Percentual (%)' },
+            { value: 'amount', label: 'Valor em reais a mais' },
+            { value: 'newSalary', label: 'Novo salário bruto' },
+          ]}
+        />
 
         {mode === 'percent' && (
           <NumberInput id="percent" label="Aumento (%)" value={percent} onChange={setPercent} min={0} error={errorFor('percent')} />

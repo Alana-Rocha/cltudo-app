@@ -11,7 +11,7 @@ export function ResultActions() {
   const [fallbackUrl, setFallbackUrl] = useState<string | null>(null);
 
   async function copyLink() {
-    const url = buildShareUrl(pathname.replace(/^\//, ''));
+    const url = buildShareUrl((pathname ?? '').replace(/^\//, ''));
     try {
       await navigator.clipboard.writeText(url);
       setFallbackUrl(null);
