@@ -12,7 +12,7 @@ export function Faq({ items }: { items: FaqItem[] }) {
   };
 
   return (
-    <section className="mt-10" aria-labelledby="faq-heading">
+    <section className="mt-10 print:hidden" aria-labelledby="faq-heading">
       <h2 id="faq-heading" className="text-xl font-semibold">
         Perguntas frequentes
       </h2>

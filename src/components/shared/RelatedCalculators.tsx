@@ -16,7 +16,7 @@ export function RelatedCalculators() {
   if (related.length === 0) return null;
 
   return (
-    <nav aria-labelledby="related-title" className="mt-12">
+    <nav aria-labelledby="related-title" className="mt-12 print:hidden">
       <h2 id="related-title" className="text-lg font-semibold">
         Calculadoras relacionadas
       </h2>

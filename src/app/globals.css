@@ -110,6 +110,17 @@ input[type='checkbox'] {
   @apply shadow-black/30;
 }
 
+@media print {
+  form button {
+    display: none;
+  }
+
+  .viz * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
+
 /* Paleta categórica dos gráficos, validada (CVD + contraste) contra o card claro e o escuro. */
 .viz {
   --series-1: #2a78d6;

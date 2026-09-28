@@ -38,7 +38,7 @@ describe('calculateNoticeStandalone', () => {
       ruleSet2026_01
     );
     expect(result.excluded.length).toBeGreaterThan(0);
-    expect(result.steps[0].value).toBe(30);
+    expect(result.steps[0]!.value).toBe(30);
   });
 
   it('sem justa causa com 5 anos completos soma 15 dias extras', () => {
@@ -48,7 +48,7 @@ describe('calculateNoticeStandalone', () => {
       'without_cause',
       ruleSet2026_01
     );
-    expect(result.steps[0].value).toBe(45); // 30 + 5*3
+    expect(result.steps[0]!.value).toBe(45); // 30 + 5*3
   });
 });
 

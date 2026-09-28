@@ -1,5 +1,5 @@
 import type { RuleSet } from '@/rules/schema';
-import { fullYearsBetween, addDays } from '@/lib/dates';
+import { fullYearsBetween, addDays, formatBrDate } from '@/lib/dates';
 
 export type NoticeReason = 'without_cause' | 'employee_resignation';
 
@@ -50,7 +50,7 @@ export function calculateNoticeStandalone(
         ? [{ key: 'extra', label: 'Acréscimo por tempo de serviço', amount: 0, type: 'info' as const, explanation: `+${years} ano(s) completo(s) × ${rules.notice.daysPerYear} dias`, legalBasis: 'Lei 12.506/2011' }]
         : []),
       { key: 'total-days', label: 'Total de dias de aviso', amount: 0, type: 'info', explanation: `${result.days} dias (máximo ${rules.notice.maxDays})` },
-      { key: 'projection', label: 'Data projetada de término do contrato', amount: 0, type: 'info', explanation: result.projectedEndDate.toISOString().slice(0, 10) },
+      { key: 'projection', label: 'Data projetada de término do contrato', amount: 0, type: 'info', explanation: formatBrDate(result.projectedEndDate) },
     ],
     totals: { gross: 0, deductions: 0, net: 0 },
     steps: [{ label: 'Dias de aviso', formula: reason === 'without_cause' ? `${rules.notice.baseDays} + ${years} × ${rules.notice.daysPerYear}` : `${rules.notice.employeeResignationDays} (pedido de demissão)`, value: result.days, unit: 'days' }],

@@ -25,6 +25,15 @@ const noFlashThemeScript = `
     var dark = stored ? stored === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
     if (dark) document.documentElement.classList.add('dark');
   } catch (e) {}
+  // Imprime sempre no tema claro (texto claro some no papel).
+  var wasDark = false;
+  window.addEventListener('beforeprint', function () {
+    wasDark = document.documentElement.classList.contains('dark');
+    document.documentElement.classList.remove('dark');
+  });
+  window.addEventListener('afterprint', function () {
+    if (wasDark) document.documentElement.classList.add('dark');
+  });
 })();
 `;
 
@@ -35,7 +44,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script dangerouslySetInnerHTML={{ __html: noFlashThemeScript }} />
       </head>
       <body className={`${inter.className} min-h-screen`}>
-        <header className="sticky top-0 z-10 border-b bg-white/80 backdrop-blur">
+        <header className="sticky top-0 z-10 border-b bg-white/80 backdrop-blur print:hidden">
           <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-3">
             <a href="/" className="transition hover:opacity-80">
               <Logo />

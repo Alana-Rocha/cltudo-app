@@ -26,8 +26,8 @@ describe('calculateOvertime', () => {
       },
       ruleSet2026_01
     );
-    expect(result.items[0].amount).toBe(toCents(150));
-    expect(result.items[1].amount).toBe(toCents(100));
+    expect(result.items[0]!.amount).toBe(toCents(150));
+    expect(result.items[1]!.amount).toBe(toCents(100));
   });
 
   it('DSR proporcional aos domingos e feriados do mês', () => {

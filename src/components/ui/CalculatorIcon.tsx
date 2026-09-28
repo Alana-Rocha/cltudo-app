@@ -1,5 +1,7 @@
 import {
   Baby,
+  Building2,
+  Scale,
   CalendarClock,
   CalendarDays,
   CalendarRange,
@@ -13,6 +15,7 @@ import {
   Receipt,
   ShieldAlert,
   Timer,
+  TrendingUp,
   TriangleAlert,
   Umbrella,
   Wallet,
@@ -37,6 +40,9 @@ const ICONS: Record<string, LucideIcon> = {
   'calendar-range': CalendarRange,
   baby: Baby,
   umbrella: Umbrella,
+  'trending-up': TrendingUp,
+  building: Building2,
+  scale: Scale,
 };
 
 export function CalculatorIcon({ name, className }: { name: string; className?: string }) {

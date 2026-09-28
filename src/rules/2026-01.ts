@@ -12,6 +12,9 @@ export const ruleSet2026_01: RuleSet = {
     'Lei nº 15.270/2025 (redutor mensal do IRRF)',
     'Receita Federal — Tributação de 2026 (tabela progressiva mensal do IRRF e redução da Lei 15.270/2025)',
     'MTE — reajuste do Seguro-Desemprego, vigência 11/01/2026',
+    'Lei 8.212/1991, art. 22 (INSS patronal e RAT)',
+    'LC 123/2006, Anexos III e V (Simples Nacional) e fator R',
+    'Lei 15.270/2025 (retenção sobre lucros e dividendos)',
   ],
   minimumWage: 162_100, // R$ 1.621,00
 
@@ -123,5 +126,42 @@ export const ruleSet2026_01: RuleSet = {
       { requestNumber: 3, minMonths: 12, installments: 4 },
       { requestNumber: 3, minMonths: 24, installments: 5 },
     ],
+  },
+
+  employerCosts: {
+    socialSecurityRate: 0.2,
+    ratRates: [0.01, 0.02, 0.03],
+    thirdPartiesRate: 0.058, // FPAS mais comuns (comércio/indústria); varia conforme a atividade
+  },
+
+  simplesNacional: {
+    // LC 123/2006, Anexos III e V (redação da LC 155/2016) — conferido no anexo publicado pela Receita.
+    annexIII: [
+      { upTo: 18_000_000, rate: 0.06, deduction: 0 },
+      { upTo: 36_000_000, rate: 0.112, deduction: 936_000 },
+      { upTo: 72_000_000, rate: 0.135, deduction: 1_764_000 },
+      { upTo: 180_000_000, rate: 0.16, deduction: 3_564_000 },
+      { upTo: 360_000_000, rate: 0.21, deduction: 12_564_000 },
+      { upTo: 480_000_000, rate: 0.33, deduction: 64_800_000 },
+    ],
+    annexV: [
+      { upTo: 18_000_000, rate: 0.155, deduction: 0 },
+      { upTo: 36_000_000, rate: 0.18, deduction: 450_000 },
+      { upTo: 72_000_000, rate: 0.195, deduction: 990_000 },
+      { upTo: 180_000_000, rate: 0.205, deduction: 1_710_000 },
+      { upTo: 360_000_000, rate: 0.23, deduction: 6_210_000 },
+      { upTo: 480_000_000, rate: 0.305, deduction: 54_000_000 },
+    ],
+    factorRThreshold: 0.28,
+  },
+
+  proLabore: {
+    inssRate: 0.11,
+  },
+
+  dividends: {
+    // Lei 15.270/2025: acima de R$ 50 mil/mês de uma mesma empresa, retém 10% sobre o total.
+    monthlyExemptUpTo: 5_000_000,
+    withholdingRate: 0.1,
   },
 };

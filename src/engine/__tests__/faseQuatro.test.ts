@@ -27,14 +27,14 @@ describe('calculateNightShift', () => {
 describe('calculateUnhealthiness', () => {
   it('usa o salário mínimo como base padrão', () => {
     const result = calculateUnhealthiness({ grade: 'medium' }, ruleSet2026_01);
-    const item = result.items[0];
+    const item = result.items[0]!;
     expect(item.amount).toBe(Math.round(ruleSet2026_01.minimumWage * 0.2));
     expect(result.warnings.length).toBeGreaterThan(0);
   });
 
   it('grau máximo = 40%', () => {
     const result = calculateUnhealthiness({ grade: 'high', base: toCents(2000) }, ruleSet2026_01);
-    expect(result.items[0].amount).toBe(toCents(800));
+    expect(result.items[0]!.amount).toBe(toCents(800));
     expect(result.warnings.length).toBe(0);
   });
 });
@@ -42,7 +42,7 @@ describe('calculateUnhealthiness', () => {
 describe('calculateHazardPay', () => {
   it('30% sobre o salário base', () => {
     const result = calculateHazardPay({ baseSalary: toCents(3000) }, ruleSet2026_01);
-    expect(result.items[0].amount).toBe(toCents(900));
+    expect(result.items[0]!.amount).toBe(toCents(900));
   });
 });
 

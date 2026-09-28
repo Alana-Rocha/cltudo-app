@@ -122,6 +122,23 @@ export const ruleSetSchema = z
         z.object({ requestNumber: z.number().int().min(1), minMonths: z.number().int().min(0), installments: z.number().int().min(0) })
       ),
     }),
+    employerCosts: z.object({
+      socialSecurityRate: z.number().min(0).max(1), // INSS patronal (CPP), Lei 8.212 art. 22, I
+      ratRates: z.array(z.number().min(0).max(1)).min(1), // RAT/SAT por grau de risco, art. 22, II
+      thirdPartiesRate: z.number().min(0).max(1), // terceiros (Sistema S, salário-educação, INCRA)
+    }),
+    simplesNacional: z.object({
+      annexIII: bracketsSchema, // faixas pela receita bruta dos últimos 12 meses (RBT12)
+      annexV: bracketsSchema,
+      factorRThreshold: z.number().min(0).max(1),
+    }),
+    proLabore: z.object({
+      inssRate: z.number().min(0).max(1), // contribuição do sócio, limitada ao teto do INSS
+    }),
+    dividends: z.object({
+      monthlyExemptUpTo: z.number().int().min(0), // por empresa e por pessoa física, no mês
+      withholdingRate: z.number().min(0).max(1), // incide sobre o total do mês quando passa do limite
+    }),
   })
   .refine((rs) => rs.inss.ceiling > rs.minimumWage, {
     message: 'INSS ceiling must be greater than the minimum wage',

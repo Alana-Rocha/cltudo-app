@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { formatCurrency, formatDecimal } from '@/lib/format';
 import type { CalculationResult } from '@/engine/types';
+import { ResultActions } from './ResultActions';
 
 function formatStepValue(value: number, unit: 'currency' | 'days' | 'hours' | undefined): string {
   if (unit === 'days') return `${value} dia${value === 1 ? '' : 's'}`;
@@ -20,7 +21,7 @@ function formatRulesVersion(id: string): string {
   });
 }
 
-type Headline = { label: string; field?: 'net' | 'deductions' };
+type Headline = { label: string; field?: 'net' | 'deductions'; absolute?: boolean };
 
 export function CalculationBreakdown({
   result,
@@ -32,11 +33,13 @@ export function CalculationBreakdown({
   summary?: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
+  const rawHeadline = result.totals[headline.field ?? 'net'];
+  const headlineValue = headline.absolute ? Math.abs(rawHeadline) : rawHeadline;
   const isMonetary = result.totals.gross !== 0 || result.totals.deductions !== 0 || result.totals.net !== 0;
 
   // Announce only once the result settles, not on every keystroke of a live calculation.
   const summaryText = isMonetary
-    ? `${headline.label}: ${formatCurrency(result.totals[headline.field ?? 'net'])}`
+    ? `${headline.label}: ${formatCurrency(headlineValue)}`
     : result.items.map((i) => `${i.label}: ${i.explanation}`).join('. ');
   const [announcement, setAnnouncement] = useState('');
   useEffect(() => {
@@ -49,7 +52,7 @@ export function CalculationBreakdown({
       {isMonetary && (
         <div className="border-b p-6 text-center">
           <p className="text-sm text-gray-500">{headline.label}</p>
-          <p className="text-3xl font-bold text-brand-700">{formatCurrency(result.totals[headline.field ?? 'net'])}</p>
+          <p className="text-3xl font-bold text-brand-700">{formatCurrency(headlineValue)}</p>
           {summary}
         </div>
       )}
@@ -65,7 +68,11 @@ export function CalculationBreakdown({
               <p className="text-sm font-medium">{item.label}</p>
               <p className="text-xs text-gray-500">{item.explanation}</p>
             </div>
-            {item.type !== 'info' && (
+            {item.type === 'info' ? (
+              item.amount !== 0 && (
+                <span className="shrink-0 whitespace-nowrap text-sm text-gray-500">{formatCurrency(item.amount)}</span>
+              )
+            ) : (
               <span
                 className={`shrink-0 whitespace-nowrap font-medium ${
                   item.type === 'deduction' || item.amount < 0 ? 'text-red-600' : 'text-gray-900'
@@ -117,12 +124,13 @@ export function CalculationBreakdown({
           type="button"
           onClick={() => setOpen((o) => !o)}
           aria-expanded={open}
-          className="text-sm font-medium text-brand-700 underline"
+          className="text-sm font-medium text-brand-700 underline print:hidden"
         >
           Como chegamos a esse valor?
         </button>
-        {open && (
-          <table className="mt-4 w-full text-sm">
+        {/* Sempre impresso, mesmo fechado na tela. */}
+        {result.steps.length > 0 && (
+          <table className={`mt-4 w-full text-sm ${open ? '' : 'hidden print:table'}`}>
             <tbody>
               {result.steps.map((step, i) => (
                 <tr key={i} className="border-b last:border-0">
@@ -137,6 +145,9 @@ export function CalculationBreakdown({
         <p className="mt-4 text-xs text-gray-400">
           Cálculo com regras vigentes a partir de {formatRulesVersion(result.rulesVersion)}.
         </p>
+        <div className="mt-4">
+          <ResultActions />
+        </div>
       </div>
     </div>
   );

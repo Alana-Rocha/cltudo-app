@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { readSharedState } from '@/lib/shareState';
 
 /**
  * Like useState, but rehydrates from and syncs to localStorage under `key`.
@@ -22,8 +23,13 @@ export function usePersistedState<T>(key: string, initialValue: T) {
 
   useEffect(() => {
     try {
-      const stored = localStorage.getItem(key);
-      if (stored !== null) setValue(JSON.parse(stored));
+      const fromLink = readSharedState();
+      if (fromLink && key in fromLink) {
+        setValue(fromLink[key] as T);
+      } else {
+        const stored = localStorage.getItem(key);
+        if (stored !== null) setValue(JSON.parse(stored));
+      }
     } catch {
       // localStorage indisponível ou valor corrompido — mantém o padrão.
     } finally {

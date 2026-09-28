@@ -1,6 +1,6 @@
 import type { RuleSet } from '@/rules/schema';
 import { add, clampToZero, divide, multiply, subtract, type Cents } from '@/lib/money';
-import { countAvos } from '@/lib/dates';
+import { countAvos, formatBrDate } from '@/lib/dates';
 import { calculateInss } from './inss';
 import { calculateIrrf } from './irrf';
 import { calculateNotice, type NoticeReason } from './notice';
@@ -85,7 +85,7 @@ export function calculateTermination(input: TerminationInput, rules: RuleSet): C
     noticeAmount = multiply(remunerationBase, (notice.days / 30) * fraction);
     projectedDate = notice.projectedEndDate;
     included.push(
-      `Aviso prévio indenizado (${notice.days} dias${fraction === 0.5 ? ', 50% por acordo (art. 484-A)' : ''}): projeta o contrato até ${projectedDate.toISOString().slice(0, 10)} para fins de avos.`
+      `Aviso prévio indenizado (${notice.days} dias${fraction === 0.5 ? ', 50% por acordo (art. 484-A)' : ''}): projeta o contrato até ${formatBrDate(projectedDate)} para fins de avos.`
     );
   } else if (input.terminationType === 'employee_resignation' && input.noticeMode === 'not_fulfilled_by_employee') {
     noticeAmount = -multiply(input.grossSalary, notice.days / 30);

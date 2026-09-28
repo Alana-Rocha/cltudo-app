@@ -7,7 +7,10 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  // tsconfig uses `jsx: preserve` for Next; tests need esbuild to compile JSX itself.
+  esbuild: { jsx: 'automatic' },
   test: {
     environment: 'node',
+    environmentMatchGlobs: [['src/**/*.test.tsx', 'jsdom']],
   },
 });

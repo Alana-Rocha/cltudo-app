@@ -8,6 +8,48 @@ export function getFaqFor(slug: string, rules: RuleSet): FaqItem[] {
 }
 
 const FAQ_BY_SLUG: Record<string, (rules: RuleSet) => FaqItem[]> = {
+  'calculadora-clt-x-pj': (r) => [
+    {
+      question: 'Quanto a mais preciso ganhar como PJ para compensar a CLT?',
+      answer: 'Depende da faixa, mas como PJ você perde férias remuneradas, 13º, FGTS e benefícios. A calculadora mostra o faturamento mensal que empata com a proposta CLT.',
+    },
+    {
+      question: 'O que é o fator R?',
+      answer: `No Simples Nacional, serviços como tecnologia e consultoria pagam pelo Anexo V (a partir de 15,5%). Se a folha, incluindo o pró-labore, chegar a ${formatPercent(r.simplesNacional.factorRThreshold, 0)} do faturamento, a empresa passa para o Anexo III, a partir de 6%.`,
+    },
+    {
+      question: 'Lucro distribuído pelo PJ paga Imposto de Renda?',
+      answer: `Até ${formatCurrency(r.dividends.monthlyExemptUpTo)} por mês de uma mesma empresa, não. Acima disso, desde 2026 há retenção de ${formatPercent(r.dividends.withholdingRate, 0)} sobre o total distribuído no mês (Lei 15.270/2025).`,
+    },
+  ],
+  'calculadora-custo-funcionario': (r) => [
+    {
+      question: 'Quanto custa um funcionário além do salário?',
+      answer: 'Além do salário, a empresa provisiona 13º e férias com 1/3 e paga FGTS. Fora do Simples Nacional, soma ainda INSS patronal, RAT e terceiros, e o custo costuma passar de 1,6 vez o salário.',
+    },
+    {
+      question: 'Empresa do Simples Nacional paga INSS patronal?',
+      answer: `Nos Anexos I, II, III e V, não: a contribuição patronal já está dentro do DAS. No Anexo IV, a empresa paga ${formatPercent(r.employerCosts.socialSecurityRate, 0)} de INSS patronal mais o RAT sobre a folha.`,
+    },
+    {
+      question: 'O que é o RAT?',
+      answer: 'É a contribuição para o seguro de acidente de trabalho, de 1%, 2% ou 3% da folha conforme o grau de risco da atividade, ajustada pelo FAP de cada empresa.',
+    },
+  ],
+  'calculadora-aumento-salarial': (r) => [
+    {
+      question: 'Por que o aumento no líquido é menor que o aumento no bruto?',
+      answer: 'Porque o salário maior paga mais INSS e, dependendo da faixa, mais Imposto de Renda. O simulador calcula o líquido antes e depois do aumento e mostra a diferença.',
+    },
+    {
+      question: 'Existe faixa em que o aumento rende menos?',
+      answer: `Sim. Entre ${formatCurrency(r.irrf.reducer.fullExemptionUpTo)} e ${formatCurrency(r.irrf.reducer.phaseOutUpTo)} a redução do Imposto de Renda diminui conforme o salário sobe. Nessa faixa, mais da metade de um aumento pode ficar em descontos.`,
+    },
+    {
+      question: 'Um aumento pode diminuir meu salário líquido?',
+      answer: 'Não. Mesmo nas faixas com mais desconto, o líquido sempre sobe um pouco quando o bruto sobe.',
+    },
+  ],
   'calculadora-salario-liquido': (r) => [
     {
       question: 'Como é calculado o salário líquido?',
