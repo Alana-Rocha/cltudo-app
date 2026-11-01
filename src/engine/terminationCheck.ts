@@ -6,7 +6,14 @@ import type { CalculationResult } from './types';
 /** Verbas que a pessoa consegue copiar do Termo de Rescisão (TRCT) ou do extrato do FGTS. */
 export type CheckedItem = 'balance' | 'notice' | 'thirteenth' | 'vacation' | 'inss' | 'irrf' | 'net' | 'fgtsFine';
 
-export type ReceivedAmounts = Partial<Record<CheckedItem, Cents>>;
+/**
+ * Além das verbas conferidas, o TRCT pode ter outros proventos (comissões, reembolsos, salário-família) e
+ * outros descontos (empréstimo consignado, faltas, adiantamentos, pensão). A conta não confere esses
+ * valores, mas eles entram no total líquido esperado.
+ */
+export type ReceivedKey = CheckedItem | 'otherEarnings' | 'otherDeductions';
+
+export type ReceivedAmounts = Partial<Record<ReceivedKey, Cents>>;
 
 export type CheckStatus = 'ok' | 'short' | 'over' | 'not_informed';
 
@@ -57,13 +64,17 @@ function sumItems(result: CalculationResult, keys: string[]): Cents {
   return result.items.filter((item) => keys.includes(item.key)).reduce((sum, item) => add(sum, item.amount), 0);
 }
 
-/** Líquido pago no TRCT: a multa do FGTS é depositada na conta do FGTS, não entra no termo. */
-function trctNet(result: CalculationResult): Cents {
-  return Math.max(0, subtract(result.totals.net, sumItems(result, ['fgts-fine'])));
+/**
+ * Líquido esperado no TRCT: a multa do FGTS é depositada na conta do FGTS, não entra no termo; outros
+ * proventos e descontos informados entram como estão.
+ */
+function trctNet(result: CalculationResult, received: ReceivedAmounts): Cents {
+  const verbas = Math.max(0, subtract(result.totals.net, sumItems(result, ['fgts-fine'])));
+  return subtract(add(verbas, received.otherEarnings ?? 0), received.otherDeductions ?? 0);
 }
 
-export function dueAmount(result: CalculationResult, key: CheckedItem): Cents {
-  if (key === 'net') return trctNet(result);
+export function dueAmount(result: CalculationResult, key: CheckedItem, received: ReceivedAmounts = {}): Cents {
+  if (key === 'net') return trctNet(result, received);
   const definition = CHECKED_ITEMS.find((item) => item.key === key)!;
   return sumItems(result, definition.sources);
 }
@@ -75,7 +86,7 @@ export function applicableItems(result: CalculationResult | null): ItemDefinitio
 
 export function compareTermination(due: CalculationResult, received: ReceivedAmounts): TerminationCheck {
   const rows: CheckRow[] = applicableItems(due).map((item) => {
-    const dueValue = dueAmount(due, item.key);
+    const dueValue = dueAmount(due, item.key, received);
     const receivedValue = received[item.key];
     if (receivedValue === undefined) {
       return { key: item.key, label: item.label, due: dueValue, shortfall: 0, status: 'not_informed', legalBasis: item.legalBasis };

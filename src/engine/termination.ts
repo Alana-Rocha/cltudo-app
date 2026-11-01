@@ -103,6 +103,11 @@ export function calculateTermination(input: TerminationInput, rules: RuleSet): C
     const fraction = noticeRule === 0.5 ? 0.5 : 1;
     noticeAmount = multiply(remunerationBase, (notice.days / 30) * fraction);
     projectedDate = notice.projectedEndDate;
+    if (fraction === 0.5) {
+      warnings.push(
+        'No acordo (art. 484-A), a lei manda pagar o aviso pela metade, mas não diz se a projeção dos avos de 13º e férias também cai pela metade. Esta conta projeta os dias inteiros, a leitura mais favorável ao trabalhador; muitos sistemas de folha projetam só metade, o que pode dar um avo a menos.'
+      );
+    }
     included.push(
       `Aviso prévio indenizado (${notice.days} dias${fraction === 0.5 ? ', 50% por acordo (art. 484-A)' : ''}): projeta o contrato até ${formatBrDate(projectedDate)} para fins de avos.`
     );

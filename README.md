@@ -68,6 +68,7 @@ Acesse [http://localhost:3000](http://localhost:3000).
 | `npm run test:watch` | Roda os testes em modo watch |
 | `npm run test:e2e` | Roda os testes E2E (Playwright) contra o build de produção |
 | `npm run test:e2e:ui` | Abre o modo interativo do Playwright |
+| `npm run fixtures:trct` | Regera os TRCTs sintéticos em PDF usados nos testes (`test-fixtures/trct`) |
 
 ## Estrutura do projeto
 

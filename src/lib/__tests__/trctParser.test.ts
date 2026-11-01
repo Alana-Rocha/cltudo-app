@@ -1,44 +1,70 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { parseTrctText } from '../trctParser';
+import * as pdfjs from 'pdfjs-dist/legacy/build/pdf.mjs';
+import { itemsFromDocument, type PdfTextItem } from '../pdfText';
+import { parseTrctItems } from '../trctParser';
 import { toCents } from '../money';
 
-// Texto como o pdf.js devolve um TRCT no modelo oficial: as verbas vêm em colunas, várias na mesma linha.
-const OFFICIAL_LAYOUT = `
-TERMO DE RESCISÃO DO CONTRATO DE TRABALHO
-21 Tipo de Contrato 1. Contrato de trabalho por prazo indeterminado
-22 Causa do Afastamento SJ2 - Despedida sem justa causa, pelo empregador
-23 Remuneração Mês Anterior Afast. 3.000,00 24 Data de Admissão 01/03/2024 25 Data do Aviso Prévio 15/06/2026
-26 Data de Afastamento 15/06/2026 27 Cód. Afastamento SJ2
-DISCRIMINAÇÃO DAS VERBAS RESCISÓRIAS
-VERBAS RESCISÓRIAS
-Rubrica Valor Rubrica Valor Rubrica Valor
-50 Saldo de 15 dias Salário 1.500,00 63 13º Salário Proporcional 6/12 avos 1.500,00 65 Férias Proporc. 5/12 avos 1.250,00
-68 Terço Constitucional de Férias 416,67 69 Aviso Prévio Indenizado 3.600,00 70 13º Salário (Aviso Prévio Indenizado) 250,00
-TOTAL RESCISÓRIO BRUTO 8.516,67
-DEDUÇÕES
-112.1 Previdência Social 112,50 112.2 Prev. Social - 13º Salário 133,19 114.1 IRRF 0,00
-TOTAL DAS DEDUÇÕES 245,69
-VALOR LÍQUIDO 8.270,98
-`;
+/** Lê um TRCT sintético de test-fixtures/trct (gerados por scripts/generateTrctFixtures.mjs). */
+async function readFixture(name: string) {
+  const data = new Uint8Array(readFileSync(new URL(`../../../test-fixtures/trct/${name}`, import.meta.url)));
+  const task = pdfjs.getDocument({ data, disableFontFace: true });
+  try {
+    return parseTrctItems(await itemsFromDocument(await task.promise));
+  } finally {
+    await task.destroy();
+  }
+}
 
-describe('parseTrctText', () => {
-  it('lê as verbas, os descontos e o líquido do modelo oficial', () => {
-    const reading = parseTrctText(OFFICIAL_LAYOUT);
+describe('parseTrctItems — layout de sistema de folha (rótulos quebrados, valor centralizado)', () => {
+  it('soma cada verba da tabela, mesmo com o rótulo em duas linhas', async () => {
+    const reading = await readFixture('payroll-agreement.pdf');
 
     expect(reading.received).toEqual({
-      balance: toCents(1500),
-      thirteenth: toCents(1750), // 1.500 proporcional + 250 do aviso indenizado
-      vacation: toCents(1666.67), // 1.250 + 416,67 do terço
-      notice: toCents(3600),
-      inss: toCents(245.69), // 112,50 do saldo + 133,19 do 13º
+      balance: toCents(2000),
+      thirteenth: toCents(2750), // 63 proporcional + 64 de exercício anterior (0) + 70 do aviso (0)
+      vacation: toCents(4666.66), // 65 proporcionais + 66 vencidas + 68 terço + 71 do aviso
+      notice: toCents(1650),
+      inss: toCents(378.88), // 112.1 do saldo + 112.2 do 13º
       irrf: 0,
-      net: toCents(8270.98),
+      net: toCents(10337.78),
+      otherEarnings: toCents(150), // reembolso de VT e rubricas zeradas
+      otherDeductions: toCents(500), // empréstimo consignado; o "aviso prévio" das deduções é desconto, não verba
     });
   });
 
-  it('lê as datas, a remuneração e a causa do afastamento', () => {
-    const reading = parseTrctText(OFFICIAL_LAYOUT);
+  it('lê o cabeçalho com o valor embaixo do rótulo, e só da página do TRCT', async () => {
+    const reading = await readFixture('payroll-agreement.pdf');
 
+    expect(reading).toMatchObject({
+      admissionDate: '10/02/2025',
+      terminationDate: '20/10/2026', // a página de quitação tem outras datas, que são ignoradas
+      gross: toCents(3000),
+      terminationType: 'agreement',
+      expiredVacation: toCents(1000),
+    });
+  });
+
+  it('lista as verbas reconhecidas, sem os "outros"', async () => {
+    const reading = await readFixture('payroll-agreement.pdf');
+
+    expect(reading.found.sort()).toEqual(['balance', 'inss', 'irrf', 'net', 'notice', 'thirteenth', 'vacation']);
+  });
+});
+
+describe('parseTrctItems — modelo oficial (código, rubrica e valor em linha)', () => {
+  it('lê verbas, descontos, líquido e o cabeçalho ao lado do rótulo', async () => {
+    const reading = await readFixture('official-model.pdf');
+
+    expect(reading.received).toMatchObject({
+      balance: toCents(1500),
+      thirteenth: toCents(1750),
+      vacation: toCents(1666.67),
+      notice: toCents(3600),
+      inss: toCents(245.69),
+      irrf: 0,
+      net: toCents(8270.98),
+    });
     expect(reading).toMatchObject({
       admissionDate: '01/03/2024',
       terminationDate: '15/06/2026',
@@ -46,54 +72,10 @@ describe('parseTrctText', () => {
       terminationType: 'without_cause',
     });
   });
+});
 
-  it('não depende da numeração dos campos, que muda entre modelos', () => {
-    const reading = parseTrctText(`
-      50 Saldo de Salário 1.500,00
-      51 13º Salário Proporcional 1.750,00
-      52 Férias Proporcionais 1.250,00 53 1/3 de Férias 416,67
-      101 INSS 112,50 102 INSS sobre 13º Salário 133,19 103 IRRF sobre 13º 0,00
-      Total Líquido 4.170,98
-    `);
-
-    expect(reading.received).toMatchObject({
-      balance: toCents(1500),
-      thirteenth: toCents(1750),
-      vacation: toCents(1666.67),
-      inss: toCents(245.69),
-      net: toCents(4170.98),
-    });
-  });
-
-  it('desconto do 13º adiantado não vira 13º recebido', () => {
-    const reading = parseTrctText(`
-      63 13º Salário Proporcional 7/12 avos 1.750,00
-      115.1 Adiantamento de 13º Salário 1.000,00
-    `);
-
-    expect(reading.received.thirteenth).toBe(toCents(1750));
-  });
-
-  it('rótulo na linha seguinte a um total sem valor não é tratado como parte dele', () => {
-    const reading = parseTrctText(`
-      TOTAL RESCISÓRIO BRUTO —
-      DEDUÇÕES
-      112.1 Previdência Social 112,50 112.2 Prev. Social - 13º Salário 133,19
-    `);
-
-    expect(reading.received.inss).toBe(toCents(245.69));
-  });
-
-  it('totais bruto e de deduções não são somados a nenhuma verba', () => {
-    const reading = parseTrctText(`
-      69 Aviso Prévio Indenizado 3.600,00
-      TOTAL RESCISÓRIO BRUTO 3.600,00
-      112.1 Previdência Social 0,00
-      TOTAL DAS DEDUÇÕES 0,00
-    `);
-
-    expect(reading.received).toEqual({ notice: toCents(3600), inss: 0 });
-  });
+describe('parseTrctItems — casos de borda', () => {
+  const item = (text: string, x: number, y: number): PdfTextItem => ({ text, x, y, width: text.length * 4, page: 1 });
 
   it.each([
     ['PD0 - Pedido de demissão', 'employee_resignation'],
@@ -101,11 +83,23 @@ describe('parseTrctText', () => {
     ['SJ2 - Despedida sem justa causa, pelo empregador', 'without_cause'],
     ['Rescisão por comum acordo (art. 484-A da CLT)', 'agreement'],
     ['Término do contrato de trabalho por prazo determinado', 'contract_end'],
-  ])('causa "%s" vira o tipo de desligamento %s', (cause, type) => {
-    expect(parseTrctText(`22 Causa do Afastamento ${cause}`).terminationType).toBe(type);
+  ])('causa "%s" vira %s', (cause, type) => {
+    const reading = parseTrctItems([item('22 Causa do Afastamento', 40, 700), item(cause, 40, 685)]);
+    expect(reading.terminationType).toBe(type);
+  });
+
+  it('valor de outra coluna não é atribuído a um rótulo sem valor', () => {
+    const reading = parseTrctItems([
+      item('VERBAS RESCISÓRIAS', 40, 600),
+      item('69 Aviso Prévio Indenizado', 40, 580), // célula sem valor
+      item('51 Comissões', 330, 580),
+      item('150,00', 500, 580),
+    ]);
+    expect(reading.received.notice).toBeUndefined();
+    expect(reading.received.otherEarnings).toBe(toCents(150));
   });
 
   it('PDF escaneado (sem texto) não preenche nada', () => {
-    expect(parseTrctText('')).toEqual({ received: {}, found: [] });
+    expect(parseTrctItems([])).toEqual({ received: {}, found: [] });
   });
 });

@@ -16,23 +16,23 @@ import {
   latePaymentFine,
   ROUNDING_TOLERANCE,
   terminationDeadlines,
-  type CheckedItem,
   type CheckRow,
   type Deadline,
   type ReceivedAmounts,
+  type ReceivedKey,
 } from '@/engine/terminationCheck';
 import type { CalculationResult } from '@/engine/types';
 import { getRulesFor } from '@/rules';
 import { formatBrDate, parseBrDate } from '@/lib/dates';
 import { formatCurrency } from '@/lib/format';
 import { maskBrCurrencyInput, toCents, type Cents } from '@/lib/money';
-import { extractPdfText, MAX_PDF_BYTES } from '@/lib/pdfText';
-import { parseTrctText, type TrctReading } from '@/lib/trctParser';
+import { MAX_PDF_BYTES, readPdfItems, type PdfTextItem } from '@/lib/pdfText';
+import { parseTrctItems, type TrctReading } from '@/lib/trctParser';
 import { parseBrNumber, useTerminationForm } from './useTerminationForm';
 
 const STORAGE_PREFIX = 'conferir-rescisao';
 
-const RECEIVED_FIELDS: Record<CheckedItem, { label: string; hint?: string }> = {
+const RECEIVED_FIELDS: Record<ReceivedKey, { label: string; hint?: string }> = {
   net: { label: 'Total líquido recebido', hint: 'O "valor líquido" do Termo de Rescisão (TRCT). Só com ele já dá para conferir.' },
   balance: { label: 'Saldo de salário recebido' },
   notice: { label: 'Aviso prévio indenizado recebido' },
@@ -41,7 +41,23 @@ const RECEIVED_FIELDS: Record<CheckedItem, { label: string; hint?: string }> = {
   inss: { label: 'INSS descontado no TRCT' },
   irrf: { label: 'IRRF descontado no TRCT' },
   fgtsFine: { label: 'Multa do FGTS depositada', hint: 'Não aparece no TRCT: veja no extrato do app FGTS.' },
+  otherEarnings: { label: 'Outros proventos do TRCT', hint: 'Comissões, reembolsos, salário-família… Não são conferidos, mas entram no total líquido.' },
+  otherDeductions: {
+    label: 'Outros descontos do TRCT',
+    hint: 'Empréstimo consignado, faltas, adiantamentos, pensão… Não são conferidos, mas entram no total líquido.',
+  },
 };
+
+/** Sem a verba no PDF, não há como saber os dias de férias vencidas; com ela, sai do valor ÷ salário diário. */
+function expiredVacationDays(reading: TrctReading): number | undefined {
+  if (!reading.expiredVacation || !reading.gross) return undefined;
+  return Math.min(30, Math.max(1, Math.round((reading.expiredVacation * 30) / reading.gross)));
+}
+
+/** "Saldo de salário" → "saldo de salário", mas siglas ficam: "INSS descontado". */
+function lowerFirst(label: string): string {
+  return /^[A-ZÀ-Ú]{2}/.test(label) ? label : label.charAt(0).toLowerCase() + label.slice(1);
+}
 
 function centsToField(cents: Cents): string {
   return maskBrCurrencyInput(String(cents));
@@ -68,14 +84,14 @@ function TrctUpload({ onRead }: { onRead: (reading: TrctReading) => void }) {
     }
 
     setStatus({ kind: 'reading', message: 'Lendo o documento…' });
-    let text: string;
+    let items: PdfTextItem[];
     try {
-      text = await extractPdfText(data);
+      items = await readPdfItems(data);
     } catch {
       setStatus({ kind: 'error', message: 'Não conseguimos abrir este PDF (ele pode estar protegido por senha). Preencha os valores à mão.' });
       return;
     }
-    if (text.trim() === '') {
+    if (items.length === 0) {
       setStatus({
         kind: 'error',
         message: 'Este PDF não tem texto: parece ser uma foto ou digitalização. Por enquanto, preencha os valores à mão.',
@@ -83,13 +99,13 @@ function TrctUpload({ onRead }: { onRead: (reading: TrctReading) => void }) {
       return;
     }
 
-    const reading = parseTrctText(text);
+    const reading = parseTrctItems(items);
     if (reading.found.length === 0) {
       setStatus({ kind: 'error', message: 'Não reconhecemos as verbas deste documento. Preencha os valores à mão.' });
       return;
     }
     onRead(reading);
-    const labels = CHECKED_ITEMS.filter((item) => reading.found.includes(item.key)).map((item) => item.label.toLowerCase());
+    const labels = CHECKED_ITEMS.filter((item) => reading.found.includes(item.key)).map((item) => lowerFirst(item.label));
     const contract = reading.admissionDate || reading.terminationDate || reading.gross ? ' Também preenchemos os dados do contrato que estavam no termo.' : '';
     setStatus({
       kind: 'done',
@@ -160,11 +176,14 @@ function CheckSummary({
   received,
   lateFine,
   deadlines,
+  halfNoticeAgreement,
 }: {
   due: CalculationResult;
   received: ReceivedAmounts;
   lateFine: { fine: Cents; daysLate: number; deadline: Date } | null;
   deadlines: Deadline[];
+  /** Acordo com aviso indenizado: há duas leituras sobre a projeção dos avos (ver o aviso do motor). */
+  halfNoticeAgreement: boolean;
 }) {
   const check = compareTermination(due, received);
   const fine = lateFine?.fine ?? 0;
@@ -238,6 +257,20 @@ function CheckSummary({
         </table>
       </div>
 
+      {(received.otherEarnings || received.otherDeductions) && (
+        <p className="border-t px-6 py-3 text-xs text-gray-500">
+          O total líquido esperado já considera {formatCurrency(received.otherEarnings ?? 0)} de outros proventos e{' '}
+          {formatCurrency(received.otherDeductions ?? 0)} de outros descontos do TRCT, que esta conta não confere.
+        </p>
+      )}
+
+      {halfNoticeAgreement && check.informedCount > 0 && (
+        <p className="border-t bg-amber-50 px-6 py-3 text-xs text-amber-800">
+          Acordo (art. 484-A): diferenças no 13º e nas férias podem vir só da forma de projetar o aviso pela metade, um
+          ponto em que a lei não é clara. Veja a explicação no detalhamento abaixo antes de cobrar a empresa.
+        </p>
+      )}
+
       {lateFine && lateFine.fine > 0 && (
         <div role="alert" className="flex gap-2 border-t bg-red-50 px-6 py-3 text-sm text-red-800">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
@@ -294,7 +327,7 @@ export function TerminationCheckCalculator() {
 
   const received: ReceivedAmounts = {};
   for (const [key, text] of Object.entries(receivedText)) {
-    if (typeof text === 'string' && text !== '') received[key as CheckedItem] = toCents(parseBrNumber(text));
+    if (typeof text === 'string' && text !== '') received[key as ReceivedKey] = toCents(parseBrNumber(text));
   }
 
   const input = form.input;
@@ -326,6 +359,7 @@ export function TerminationCheckCalculator() {
                 terminationDate: reading.terminationDate,
                 gross: reading.gross !== undefined ? centsToField(reading.gross) : undefined,
                 terminationType: reading.terminationType,
+                expiredVacationDays: expiredVacationDays(reading),
               });
               setReceivedText((previous) => ({
                 ...previous,
@@ -334,7 +368,7 @@ export function TerminationCheckCalculator() {
             }}
           />
           <p className="text-xs text-gray-500">Ou copie do Termo de Rescisão (TRCT). Preencha só o que quiser conferir.</p>
-          {applicableItems(result).map(({ key }) => (
+          {[...applicableItems(result).map(({ key }) => key), 'otherEarnings' as const, 'otherDeductions' as const].map((key) => (
             <CurrencyInput
               key={key}
               id={`received-${key}`}
@@ -360,7 +394,13 @@ export function TerminationCheckCalculator() {
       <div ref={resultRef} className="calc-result scroll-mt-20">
         {result && (
           <>
-            <CheckSummary due={result} received={received} lateFine={lateFine} deadlines={deadlines} />
+            <CheckSummary
+              due={result}
+              received={received}
+              lateFine={lateFine}
+              deadlines={deadlines}
+              halfNoticeAgreement={input?.terminationType === 'agreement' && input.noticeMode === 'indemnified'}
+            />
             <h2 className="mb-3 text-lg font-semibold">Como calculamos o valor devido</h2>
             <CalculationBreakdown result={result} headline={{ label: 'Total líquido devido (com a multa do FGTS)' }} />
           </>
