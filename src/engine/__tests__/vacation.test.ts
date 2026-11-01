@@ -52,4 +52,10 @@ describe('calculateVacation', () => {
     expect(maxVacationDaysForAbsences(0, ruleSet2026_01)).toBe(30);
     expect(maxVacationDaysForAbsences(40, ruleSet2026_01)).toBe(0);
   });
+
+  it('não arredonda o valor diário: 30 dias com salário de R$ 2.000 valem R$ 2.000,00 + R$ 666,67', () => {
+    const result = calculateVacation({ grossSalary: toCents(2000), daysTaken: 30, daysSold: 0, dependents: 0 }, ruleSet2026_01);
+    expect(result.items.find((i) => i.key === 'taken')!.amount).toBe(toCents(2000));
+    expect(result.items.find((i) => i.key === 'taken-bonus')!.amount).toBe(toCents(666.67));
+  });
 });

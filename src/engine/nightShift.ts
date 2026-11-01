@@ -18,11 +18,11 @@ export type NightShiftInput = {
  */
 export function calculateNightShift(input: NightShiftInput, rules: RuleSet): CalculationResult {
   const monthlyHours = input.monthlyHours ?? rules.overtime.defaultMonthlyHours;
-  const hourlyRate = divide(input.grossSalary, Math.round(monthlyHours));
+  const hourlyRate = divide(input.grossSalary, Math.round(monthlyHours)); // só para exibir; o cálculo usa o valor sem arredondar
   const rate = input.additionalRate ?? rules.nightShift.additionalRate;
 
   const reducedHours = input.nightHoursWorked * (60 / rules.nightShift.reducedHourMinutes);
-  const baseAmount = multiply(hourlyRate, reducedHours);
+  const baseAmount = multiply(input.grossSalary, reducedHours / Math.round(monthlyHours));
   const additional = multiply(baseAmount, rate);
 
   return {

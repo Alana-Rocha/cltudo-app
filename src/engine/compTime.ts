@@ -19,11 +19,11 @@ export type CompTimeInput = {
  */
 export function calculateCompTime(input: CompTimeInput, rules: RuleSet): CalculationResult {
   const monthlyHours = input.monthlyHours ?? rules.overtime.defaultMonthlyHours;
-  const hourlyRate = divide(input.grossSalary, Math.round(monthlyHours));
+  const hourlyRate = divide(input.grossSalary, Math.round(monthlyHours)); // só para exibir; o cálculo usa o valor sem arredondar
   const payOutRate = input.payOutRate ?? 0.5;
 
   const isCredit = input.balanceHours >= 0;
-  const payoutValue = isCredit ? multiply(hourlyRate, Math.abs(input.balanceHours) * (1 + payOutRate)) : 0;
+  const payoutValue = isCredit ? multiply(input.grossSalary, (Math.abs(input.balanceHours) * (1 + payOutRate)) / Math.round(monthlyHours)) : 0;
 
   return {
     items: [

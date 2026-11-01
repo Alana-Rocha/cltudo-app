@@ -52,4 +52,12 @@ describe('calculateOvertime', () => {
     const hourlyStep = result.steps.find((s) => s.label === 'Valor-hora')!;
     expect(hourlyStep.value).toBe(toCents(10));
   });
+
+  it('não arredonda o valor-hora: R$ 3.000 ÷ 220h × 1,5 × 40h = R$ 818,18', () => {
+    const result = calculateOvertime(
+      { grossSalary: toCents(3000), lines: [{ hours: 40, rate: 0.5 }], workingDaysInMonth: 22, sundaysAndHolidaysInMonth: 0 },
+      ruleSet2026_01
+    );
+    expect(result.items.find((i) => i.key === 'he-0')!.amount).toBe(toCents(818.18));
+  });
 });

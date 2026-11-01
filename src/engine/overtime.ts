@@ -17,11 +17,11 @@ export type OvertimeInput = {
 export function calculateOvertime(input: OvertimeInput, rules: RuleSet): CalculationResult {
   const monthlyHours = input.monthlyHours ?? rules.overtime.defaultMonthlyHours;
   const hourlyBase = add(input.grossSalary, input.habitualAllowances ?? 0);
-  const hourlyRate = divide(hourlyBase, Math.round(monthlyHours));
+  const hourlyRate = divide(hourlyBase, Math.round(monthlyHours)); // só para exibir; o cálculo usa o valor sem arredondar
 
   let totalOvertime: Cents = 0;
   const lineItems = input.lines.map((line, i) => {
-    const amount = multiply(hourlyRate, (1 + line.rate) * line.hours);
+    const amount = multiply(hourlyBase, ((1 + line.rate) * line.hours) / Math.round(monthlyHours));
     totalOvertime = add(totalOvertime, amount);
     return {
       key: `he-${i}`,

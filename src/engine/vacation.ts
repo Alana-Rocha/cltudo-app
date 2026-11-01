@@ -32,13 +32,12 @@ export function calculateVacation(input: VacationInput, rules: RuleSet): Calcula
   }
 
   const remunerationBase = add(input.grossSalary, input.averageVariables ?? 0);
-  const dailyRate = divide(remunerationBase, 30);
-
-  const takenValue = multiply(dailyRate, input.daysTaken);
+  // Multiplica antes de dividir: 30 dias de férias valem exatamente um salário.
+  const takenValue = divide(remunerationBase * input.daysTaken, 30);
   const takenBonus = multiply(takenValue, rules.vacation.bonusFraction);
   const taxableVacation = add(takenValue, takenBonus);
 
-  const soldValue = multiply(dailyRate, input.daysSold);
+  const soldValue = divide(remunerationBase * input.daysSold, 30);
   const soldBonus = multiply(soldValue, rules.vacation.bonusFraction);
   const soldTotal = add(soldValue, soldBonus); // isento de INSS/IRRF
 
