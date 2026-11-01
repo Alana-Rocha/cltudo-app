@@ -117,11 +117,11 @@ test.describe('Regras de negócio nos formulários', () => {
   test('rescisão: desligamento antes das regras disponíveis avisa em vez de calcular errado', async ({ page, calculator }) => {
     await calculator.open('calculadora-rescisao');
     await calculator.fill('Data de admissão', '01/03/2020');
-    await calculator.fill('Data de desligamento', '15/06/2025');
+    await calculator.fill('Data de desligamento', '15/06/2023');
     await calculator.fill('Salário bruto', '3.000,00');
     await calculator.submit();
 
-    await expect(page.getByText(/Por enquanto só há regras de INSS e IRRF a partir de 01\/01\/2026/)).toBeVisible();
+    await expect(page.getByText(/Por enquanto só há regras de INSS e IRRF a partir de 01\/01\/2024/)).toBeVisible();
     await calculator.expectNoResult();
   });
 

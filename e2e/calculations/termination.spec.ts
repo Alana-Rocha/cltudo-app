@@ -22,6 +22,24 @@ test.describe('Rescisão', () => {
     await calculator.expectLineItem('INSS sobre o 13º', 'R$ 133,19');
   });
 
+  test('desligamento em 2025 usa as tabelas de 2025, não as de hoje', async ({ calculator }) => {
+    // Regras pela data do desligamento (14/03/2025): salário mínimo R$ 1.518 e faixas do INSS de 2025.
+    // Saldo: 6.000 × 14 ÷ 30 = 2.800 → INSS 113,85 + 1.275,88 × 9% + 6,12 × 12% = 229,4136
+    //   (com a tabela de 2026 daria 227,69)
+    // Aviso de 36 dias projeta até 19/04/2025: 13º = 4/12 = 2.000 → INSS 113,85 + 482 × 9% = 157,23
+    // Férias: período em curso desde 01/03/2025 → março + 19 dias de abril = 2/12
+    await calculator.open('calculadora-rescisao');
+    await calculator.fill('Data de admissão', '01/03/2023');
+    await calculator.fill('Data de desligamento', '14/03/2025');
+    await calculator.fill('Salário bruto', '6.000,00');
+
+    await calculator.expectLineItem('Saldo de salário', 'R$ 2.800,00');
+    await calculator.expectLineItem('INSS sobre saldo de salário', 'R$ 229,41');
+    await calculator.expectLineItem('INSS sobre o 13º', 'R$ 157,23');
+    await calculator.expectLineItem('Férias proporcionais', '2/12 avos');
+    await expect(calculator.result.getByText('Cálculo com regras vigentes a partir de janeiro de 2025.')).toBeVisible();
+  });
+
   test('justa causa: sem aviso prévio, sem 13º e sem multa do FGTS', async ({ calculator }) => {
     await calculator.open('calculadora-rescisao');
     await calculator.fill('Data de admissão', '01/03/2024');

@@ -94,7 +94,7 @@ describe('TerminationCalculator', () => {
 
   it('desligamento antes das regras disponíveis mostra erro em vez de quebrar', () => {
     render(<TerminationCalculator />);
-    fillDates('01/03/2024', '20/12/2025');
+    fillDates('01/03/2020', '20/12/2023');
     fireEvent.submit(screen.getByRole('button', { name: 'Calcular' }).closest('form')!);
 
     expect(screen.getByText(/só há regras de INSS e IRRF/)).toBeTruthy();

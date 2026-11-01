@@ -1,4 +1,8 @@
 import { parseRuleSets, type RuleSet } from './schema';
+import { ruleSet2024_01 } from './2024-01';
+import { ruleSet2024_02 } from './2024-02';
+import { ruleSet2025_01 } from './2025-01';
+import { ruleSet2025_05 } from './2025-05';
 import { ruleSet2026_01 } from './2026-01';
 
 /**
@@ -7,7 +11,13 @@ import { ruleSet2026_01 } from './2026-01';
  * unavailable or fails schema validation. Add a new rule set here (or in the
  * remote source) whenever legislation changes — never edit the engine.
  */
-const fallbackRuleSets: RuleSet[] = parseRuleSets([ruleSet2026_01]);
+const fallbackRuleSets: RuleSet[] = parseRuleSets([
+  ruleSet2024_01,
+  ruleSet2024_02,
+  ruleSet2025_01,
+  ruleSet2025_05,
+  ruleSet2026_01,
+]);
 
 let cachedRemoteRuleSets: RuleSet[] | null = null;
 

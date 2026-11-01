@@ -21,7 +21,7 @@ export const metadata: Metadata = {
     template: '%s | CLTudo',
   },
   description:
-    'CLTudo: calcule salário líquido, rescisão, férias, 13º, FGTS e compare CLT x PJ, com as regras de 2026 e o passo a passo de cada conta.',
+    'CLTudo: calcule salário líquido, rescisão, férias, 13º, FGTS e compare CLT x PJ, com as tabelas oficiais desde 2024 e o passo a passo de cada conta.',
   applicationName: 'CLTudo',
   // O script do AdSense só carrega após o consentimento; a meta tag deixa o robô de verificação achar o publisher.
   other: site.ads.adsenseClient ? { 'google-adsense-account': site.ads.adsenseClient } : {},
