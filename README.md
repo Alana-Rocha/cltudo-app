@@ -66,6 +66,8 @@ Acesse [http://localhost:3000](http://localhost:3000).
 | `npm run start` | Roda o build de produção |
 | `npm test` | Roda a suíte de testes (Vitest) uma vez |
 | `npm run test:watch` | Roda os testes em modo watch |
+| `npm run test:e2e` | Roda os testes E2E (Playwright) contra o build de produção |
+| `npm run test:e2e:ui` | Abre o modo interativo do Playwright |
 
 ## Estrutura do projeto
 
@@ -95,6 +97,21 @@ npm test
 ```
 
 Os testes cobrem o motor de cálculo (`src/engine/__tests__`), utilitários (`src/lib/__tests__`), hooks (`src/hooks/__tests__`) e componentes (`src/components/__tests__`).
+
+### Testes E2E
+
+```bash
+npx playwright install chromium   # só na primeira vez
+npm run test:e2e
+```
+
+Os testes em [e2e/](e2e) sobem o build de produção na porta 3100 e usam o site como uma pessoa usaria, no desktop e no celular:
+
+- `e2e/calculations/`: cada calculadora com valores esperados **calculados à mão** a partir da tabela de regras (a conta está no comentário de cada teste), sem usar o motor do app como gabarito.
+- Navegação, busca, banner de cookies, tema, link compartilhado, impressão, validação dos formulários, headers de segurança e layout sem rolagem horizontal.
+- Todo teste falha se a página tiver erro de JavaScript ou de console (inclusive de hidratação).
+
+O relógio fica congelado em 15/06/2026 ([e2e/fixtures.ts](e2e/fixtures.ts)), então os valores não mudam quando um novo conjunto de regras entrar em vigor. Ao adicionar regras de um novo ano, crie novos cenários com a data correspondente em vez de alterar os existentes.
 
 ## Aviso legal
 

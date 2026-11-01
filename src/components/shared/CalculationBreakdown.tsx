@@ -86,7 +86,9 @@ export function CalculationBreakdown({
       {isMonetary && (
         <div className="result-hero border-b px-6 py-7 text-center">
           <p className="text-sm font-medium text-gray-600">{headline.label}</p>
-          <p className="mt-1 text-4xl font-bold tracking-tight text-brand-700 tabular-nums">{formatCurrency(headlineValue)}</p>
+          <p data-testid="result-headline" className="mt-1 text-4xl font-bold tracking-tight text-brand-700 tabular-nums">
+            {formatCurrency(headlineValue)}
+          </p>
           {summary}
         </div>
       )}
