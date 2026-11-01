@@ -18,25 +18,25 @@ function decode(value: string): Record<string, unknown> | null {
   }
 }
 
-// Keyed by the query string it was parsed from, so every hook mounting on
+// Keyed by the hash it was parsed from, so every hook mounting on
 // the same URL reads the same values and a later navigation re-parses.
-let cache: { search: string; data: Record<string, unknown> | null } | null = null;
+let cache: { hash: string; data: Record<string, unknown> | null } | null = null;
 
 /**
- * Values from a shared link. The param is removed from the address bar right
- * after the mount effects that read it, so later edits aren't overwritten by
- * the link on reload.
+ * Values from a shared link. They travel in the hash (#dados=...), which the
+ * browser never sends to the server, so salaries don't end up in access logs.
+ * The hash is removed from the address bar right after the mount effects that
+ * read it, so later edits aren't overwritten by the link on reload.
  */
 export function readSharedState(): Record<string, unknown> | null {
   const url = new URL(window.location.href);
-  if (cache?.search === url.search) return cache.data;
+  if (cache?.hash === url.hash) return cache.data;
 
-  const raw = url.searchParams.get(PARAM);
-  cache = { search: url.search, data: raw ? decode(raw) : null };
+  const raw = new URLSearchParams(url.hash.slice(1)).get(PARAM);
+  cache = { hash: url.hash, data: raw ? decode(raw) : null };
   if (raw) {
     queueMicrotask(() => {
-      url.searchParams.delete(PARAM);
-      window.history.replaceState(window.history.state, '', url.pathname + url.search + url.hash);
+      window.history.replaceState(window.history.state, '', url.pathname + url.search);
     });
   }
   return cache.data;
@@ -55,7 +55,6 @@ export function buildShareUrl(prefix: string): string {
   }
   const url = new URL(window.location.href);
   url.search = '';
-  url.hash = '';
-  url.searchParams.set(PARAM, encode(data));
+  url.hash = new URLSearchParams({ [PARAM]: encode(data) }).toString();
   return url.toString();
 }

@@ -3,6 +3,12 @@
 import { useEffect, useState } from 'react';
 import { readSharedState } from '@/lib/shareState';
 
+// Links compartilhados e o localStorage vêm de fora: um valor de outro tipo
+// (objeto, null, número no lugar de texto) quebraria a calculadora ao renderizar.
+function isSameType<T>(candidate: unknown, initialValue: T): candidate is T {
+  return typeof candidate === typeof initialValue && candidate !== null && !Array.isArray(candidate);
+}
+
 /**
  * Like useState, but rehydrates from and syncs to localStorage under `key`.
  * Always starts from `initialValue` on the first render (server and client
@@ -24,12 +30,9 @@ export function usePersistedState<T>(key: string, initialValue: T) {
   useEffect(() => {
     try {
       const fromLink = readSharedState();
-      if (fromLink && key in fromLink) {
-        setValue(fromLink[key] as T);
-      } else {
-        const stored = localStorage.getItem(key);
-        if (stored !== null) setValue(JSON.parse(stored));
-      }
+      const stored = localStorage.getItem(key);
+      const candidate = fromLink && key in fromLink ? fromLink[key] : stored !== null ? JSON.parse(stored) : undefined;
+      if (isSameType(candidate, initialValue)) setValue(candidate);
     } catch {
       // localStorage indisponível ou valor corrompido — mantém o padrão.
     } finally {

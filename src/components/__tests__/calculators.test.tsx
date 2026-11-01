@@ -49,14 +49,23 @@ describe('SalaryCalculator', () => {
   it('valores de um link compartilhado têm prioridade sobre os salvos no navegador', async () => {
     localStorage.setItem('calculadora-salario-liquido:gross', JSON.stringify('1.000,00'));
     const shared = btoa(JSON.stringify({ 'calculadora-salario-liquido:gross': '6.000,00' }));
-    window.history.replaceState(null, '', `/calculadora-salario-liquido?dados=${shared}`);
+    window.history.replaceState(null, '', `/calculadora-salario-liquido#dados=${shared}`);
 
     render(<SalaryCalculator />);
     const input = (await screen.findByLabelText(/Salário bruto/)) as HTMLInputElement;
     await screen.findByText('Salário líquido');
     expect(input.value).toBe('6.000,00');
     await new Promise((r) => setTimeout(r, 0));
-    expect(window.location.search).toBe('');
+    expect(window.location.hash).toBe('');
+  });
+
+  it('ignora um link compartilhado com valor de tipo errado em vez de quebrar a página', async () => {
+    const shared = btoa(JSON.stringify({ 'calculadora-salario-liquido:gross': { evil: 1 } }));
+    window.history.replaceState(null, '', `/calculadora-salario-liquido#dados=${shared}`);
+
+    render(<SalaryCalculator />);
+    const input = (await screen.findByLabelText(/Salário bruto/)) as HTMLInputElement;
+    expect(input.value).toBe('');
   });
 
   it('restaura o resultado dos dados salvos ao recarregar', async () => {

@@ -18,7 +18,7 @@ describe('shareState', () => {
     localStorage.setItem('theme', JSON.stringify('dark'));
 
     const url = new URL(buildShareUrl('calculadora-ferias'));
-    window.history.replaceState(null, '', url.pathname + url.search);
+    window.history.replaceState(null, '', url.pathname + url.hash);
 
     expect(readSharedState()).toEqual({
       'calculadora-ferias:gross': '3.000,00',
@@ -26,19 +26,27 @@ describe('shareState', () => {
     });
   });
 
+  it('leva os dados no hash, que o navegador não envia ao servidor', () => {
+    localStorage.setItem('calculadora-ferias:gross', JSON.stringify('3.000,00'));
+    const url = new URL(buildShareUrl('calculadora-ferias'));
+
+    expect(url.search).toBe('');
+    expect(url.hash).toMatch(/^#dados=/);
+  });
+
   it('remove o parâmetro da barra de endereço depois de ler', async () => {
     localStorage.setItem('calculadora-ferias:gross', JSON.stringify('Férias & 13º'));
     const url = new URL(buildShareUrl('calculadora-ferias'));
-    window.history.replaceState(null, '', url.pathname + url.search);
+    window.history.replaceState(null, '', url.pathname + url.hash);
 
     expect(readSharedState()?.['calculadora-ferias:gross']).toBe('Férias & 13º');
     await flushMicrotasks();
-    expect(window.location.search).toBe('');
+    expect(window.location.hash).toBe('');
     expect(readSharedState()).toBeNull();
   });
 
   it('ignora um parâmetro corrompido', async () => {
-    window.history.replaceState(null, '', '/calculadora-ferias?dados=%%%nao-e-base64');
+    window.history.replaceState(null, '', '/calculadora-ferias#dados=%%%nao-e-base64');
     expect(readSharedState()).toBeNull();
     await flushMicrotasks();
   });
