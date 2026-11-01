@@ -45,9 +45,9 @@ export class CalculatorPage {
     await this.page.getByRole('button', { name: 'Mais opções' }).click();
   }
 
-  /** "Calcular" em quase todas; o comparador CLT x PJ usa "Comparar". */
+  /** "Calcular" em quase todas; o comparador CLT x PJ usa "Comparar" e a conferência de rescisão, "Conferir". */
   get submitButton(): Locator {
-    return this.page.getByRole('button', { name: /^(Calcular|Comparar)$/ });
+    return this.page.getByRole('button', { name: /^(Calcular|Comparar|Conferir)$/ });
   }
 
   async submit() {

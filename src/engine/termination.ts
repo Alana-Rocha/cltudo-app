@@ -52,6 +52,27 @@ const FGTS_WITHDRAWAL_RATE: Record<TerminationType, number> = {
   contract_end: 1.0,
 };
 
+function noticeReasonFor(type: TerminationType): NoticeReason {
+  return type === 'employee_resignation' ? 'employee_resignation' : 'without_cause';
+}
+
+function isNoticeIndemnified(input: Pick<TerminationInput, 'terminationType' | 'noticeMode'>): boolean {
+  return NOTICE_DUE[input.terminationType] !== false && input.noticeMode === 'indemnified';
+}
+
+/**
+ * Fim do contrato para efeitos legais: com aviso prévio indenizado, a data do desligamento mais os dias de
+ * aviso (CLT art. 487, §1º; OJ 82 e 83 da SDI-1 do TST). É daí que contam os avos e a prescrição.
+ */
+export function projectedContractEnd(
+  input: Pick<TerminationInput, 'admissionDate' | 'terminationDate' | 'terminationType' | 'noticeMode'>,
+  rules: RuleSet
+): Date {
+  if (!isNoticeIndemnified(input)) return input.terminationDate;
+  return calculateNotice(input.admissionDate, input.terminationDate, noticeReasonFor(input.terminationType), rules)
+    .projectedEndDate;
+}
+
 export function calculateTermination(input: TerminationInput, rules: RuleSet): CalculationResult {
   const included: string[] = [];
   const excluded: string[] = [];
@@ -75,12 +96,10 @@ export function calculateTermination(input: TerminationInput, rules: RuleSet): C
   // 2) Aviso prévio.
   let noticeAmount: Cents = 0;
   let projectedDate = input.terminationDate;
-  const noticeReason: NoticeReason =
-    input.terminationType === 'employee_resignation' ? 'employee_resignation' : 'without_cause';
-  const notice = calculateNotice(input.admissionDate, input.terminationDate, noticeReason, rules);
+  const notice = calculateNotice(input.admissionDate, input.terminationDate, noticeReasonFor(input.terminationType), rules);
 
   const noticeRule = NOTICE_DUE[input.terminationType];
-  if (noticeRule !== false && input.noticeMode === 'indemnified') {
+  if (isNoticeIndemnified(input)) {
     const fraction = noticeRule === 0.5 ? 0.5 : 1;
     noticeAmount = multiply(remunerationBase, (notice.days / 30) * fraction);
     projectedDate = notice.projectedEndDate;

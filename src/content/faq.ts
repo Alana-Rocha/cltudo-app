@@ -94,6 +94,28 @@ const FAQ_BY_SLUG: Record<string, (rules: RuleSet) => FaqItem[]> = {
       answer: 'Só quando você informa o saldo real do FGTS. Sem ele, o valor é uma estimativa que não reproduz reajustes salariais ao longo do contrato.',
     },
   ],
+  'conferir-rescisao': () => [
+    {
+      question: 'Onde encontro os valores que recebi?',
+      answer: 'No Termo de Rescisão do Contrato de Trabalho (TRCT), que a empresa precisa entregar com o pagamento. A multa do FGTS não aparece nele: ela é depositada na conta do FGTS e aparece no extrato do app FGTS.',
+    },
+    {
+      question: 'Qual é o prazo para a empresa pagar a rescisão?',
+      answer: 'Dez dias corridos depois do fim do contrato, em qualquer tipo de desligamento (CLT art. 477, §6º). Passou disso, a empresa deve uma multa de um salário (art. 477, §8º), salvo se o atraso foi causado pelo próprio trabalhador.',
+    },
+    {
+      question: 'Recebi menos do que o calculado. O que eu faço?',
+      answer: 'Primeiro, peça a correção ao RH levando o relatório impresso. Se não resolver, o sindicato da categoria costuma orientar de graça. Também é possível reclamar na Justiça do Trabalho em até 2 anos depois do fim do contrato.',
+    },
+    {
+      question: 'Diferenças de centavos são erro?',
+      answer: 'Não. Sistemas de folha arredondam de jeitos diferentes, então diferenças de até R$ 1,00 aparecem como "confere". Diferenças maiores costumam vir de avos contados errado, médias de horas extras fora da conta ou desconto a mais.',
+    },
+    {
+      question: 'Por que meu valor pode ser diferente mesmo com tudo certo?',
+      answer: 'Convenções coletivas podem garantir verbas extras, e médias de comissões e horas extras mudam o aviso, o 13º e as férias. A conta usa a CLT e as tabelas oficiais vigentes na data do desligamento; informe a média de variáveis para chegar mais perto.',
+    },
+  ],
   'calculadora-ferias': (r) => [
     {
       question: 'Como é calculado o valor das férias?',

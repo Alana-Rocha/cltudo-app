@@ -5,6 +5,7 @@ import {
   CalendarClock,
   CalendarDays,
   CalendarRange,
+  ClipboardCheck,
   Clock,
   FileText,
   Gift,
@@ -43,6 +44,7 @@ const ICONS: Record<string, LucideIcon> = {
   'trending-up': TrendingUp,
   building: Building2,
   scale: Scale,
+  'clipboard-check': ClipboardCheck,
 };
 
 export function CalculatorIcon({ name, className }: { name: string; className?: string }) {
