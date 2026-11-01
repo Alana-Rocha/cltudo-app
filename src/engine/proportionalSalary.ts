@@ -13,8 +13,7 @@ export type ProportionalSalaryInput = {
 
 /** Salário proporcional a um mês incompleto (admissão ou saída no meio do mês). */
 export function calculateProportionalSalary(input: ProportionalSalaryInput, rules: RuleSet): CalculationResult {
-  const dailyRate = divide(input.grossSalary, 30);
-  const proportionalGross = multiply(dailyRate, input.daysWorked);
+  const proportionalGross = divide(input.grossSalary * input.daysWorked, 30);
 
   const inss = calculateInss(proportionalGross, rules);
   const irrf = calculateIrrf({ taxableIncome: proportionalGross, inss: inss.total, dependents: input.dependents }, rules);

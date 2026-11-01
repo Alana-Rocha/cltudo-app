@@ -1,6 +1,6 @@
 import type { RuleSet } from '@/rules/schema';
 import { add, clampToZero, divide, multiply, subtract, type Cents } from '@/lib/money';
-import { countAvos, formatBrDate } from '@/lib/dates';
+import { countAvos, formatBrDate, fullYearsBetween } from '@/lib/dates';
 import { calculateInss } from './inss';
 import { calculateIrrf } from './irrf';
 import { calculateNotice, type NoticeReason } from './notice';
@@ -69,7 +69,7 @@ export function calculateTermination(input: TerminationInput, rules: RuleSet): C
   }
 
   // 1) Saldo de salário — always due.
-  const balanceAmount = multiply(divide(input.grossSalary, 30), input.daysWorkedInLastMonth);
+  const balanceAmount = divide(input.grossSalary * input.daysWorkedInLastMonth, 30);
   included.push('Saldo de salário: devido em todo tipo de desligamento.');
 
   // 2) Aviso prévio.
@@ -109,12 +109,16 @@ export function calculateTermination(input: TerminationInput, rules: RuleSet): C
   }
 
   // 4) Férias vencidas + proporcionais + 1/3 — always due (even on just cause).
-  const acquisitivePeriodAvos = countAvos(
-    input.admissionDate,
-    projectedDate,
-    rules.vacation.minDaysForMonth
+  // Período aquisitivo em curso: começa no último aniversário da admissão (CLT art. 146, parágrafo único).
+  // Períodos anteriores não gozados são férias vencidas, informadas à parte.
+  const currentPeriodStart = new Date(
+    Date.UTC(
+      input.admissionDate.getUTCFullYear() + fullYearsBetween(input.admissionDate, projectedDate),
+      input.admissionDate.getUTCMonth(),
+      input.admissionDate.getUTCDate()
+    )
   );
-  const vacationProportionalAvos = acquisitivePeriodAvos % 12 || (acquisitivePeriodAvos > 0 ? 12 : 0);
+  const vacationProportionalAvos = countAvos(currentPeriodStart, projectedDate, rules.vacation.minDaysForMonth);
   const vacationBase = divide(multiply(remunerationBase, vacationProportionalAvos), 12);
   const vacationBonus = multiply(vacationBase, rules.vacation.bonusFraction);
   const vacationTotal = add(vacationBase, vacationBonus);
@@ -124,7 +128,7 @@ export function calculateTermination(input: TerminationInput, rules: RuleSet): C
   const expiredVacationDays = Math.min(30, Math.max(0, input.expiredVacationDays ?? 0));
   let expiredVacationTotal: Cents = 0;
   if (expiredVacationDays > 0) {
-    const expiredBase = multiply(divide(remunerationBase, 30), expiredVacationDays);
+    const expiredBase = divide(remunerationBase * expiredVacationDays, 30);
     const expiredBonus = multiply(expiredBase, rules.vacation.bonusFraction);
     expiredVacationTotal = add(expiredBase, expiredBonus);
     if (input.expiredVacationDoubled) expiredVacationTotal = multiply(expiredVacationTotal, 2);

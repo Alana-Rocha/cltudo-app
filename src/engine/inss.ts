@@ -29,19 +29,25 @@ export function calculateInss(base: Cents, rules: RuleSet): InssResult {
 
   const brackets: InssBracketBreakdown[] = [];
   let previousUpTo = 0;
-  let total = 0;
+  // Soma exata em centavos × 10.000 (alíquotas em pontos-base): arredondar faixa a faixa
+  // erra 1 centavo em boa parte dos salários (ex.: teto de 2026 daria R$ 988,10, não R$ 988,09).
+  let exactTotal = 0;
 
   for (const bracket of rules.inss.brackets) {
     const bracketUpper = bracket.upTo === null ? cappedBase : Math.min(bracket.upTo, cappedBase);
     const bracketBase = clampToZero(subtract(bracketUpper, previousUpTo));
     if (bracketBase > 0) {
-      const amount = multiply(bracketBase, bracket.rate);
-      brackets.push({ rate: bracket.rate, base: bracketBase, amount });
-      total = add(total, amount);
+      brackets.push({ rate: bracket.rate, base: bracketBase, amount: multiply(bracketBase, bracket.rate) });
+      exactTotal += bracketBase * Math.round(bracket.rate * 10_000);
     }
     previousUpTo = bracket.upTo === null ? cappedBase : bracket.upTo;
     if (previousUpTo >= cappedBase) break;
   }
+
+  const total = Math.round(exactTotal / 10_000);
+  // A última faixa absorve a diferença de arredondamento, para as faixas exibidas somarem o total.
+  const lastBracketShown = brackets[brackets.length - 1];
+  if (lastBracketShown) lastBracketShown.amount += total - brackets.reduce((sum, b) => add(sum, b.amount), 0);
 
   const lastBracket = brackets[brackets.length - 1];
   const nominalRate = lastBracket ? lastBracket.rate : 0;

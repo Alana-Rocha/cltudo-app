@@ -21,8 +21,8 @@ export const ruleSet2026_01: RuleSet = {
   inss: {
     brackets: [
       { upTo: 162_100, rate: 0.075, deduction: 0 },
-      { upTo: 290_284, rate: 0.09, deduction: 2_366 },
-      { upTo: 435_427, rate: 0.12, deduction: 11_075 },
+      { upTo: 290_284, rate: 0.09, deduction: 2_432 },
+      { upTo: 435_427, rate: 0.12, deduction: 11_140 },
       { upTo: null, rate: 0.14, deduction: 19_849 },
     ],
     ceiling: 847_555, // R$ 8.475,55

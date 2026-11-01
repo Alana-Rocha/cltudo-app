@@ -34,7 +34,7 @@ export function calculateOvertime(input: OvertimeInput, rules: RuleSet): Calcula
 
   const dsr =
     input.workingDaysInMonth > 0
-      ? multiply(divide(totalOvertime, input.workingDaysInMonth), input.sundaysAndHolidaysInMonth)
+      ? divide(totalOvertime * input.sundaysAndHolidaysInMonth, input.workingDaysInMonth)
       : 0;
 
   return {

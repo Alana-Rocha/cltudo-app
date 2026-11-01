@@ -18,7 +18,7 @@ export type DsrInput = {
 export function calculateDsr(input: DsrInput, rules: RuleSet): CalculationResult {
   const dsr =
     input.workingDaysInMonth > 0
-      ? multiply(divide(input.variableAmount, input.workingDaysInMonth), input.sundaysAndHolidaysInMonth)
+      ? divide(input.variableAmount * input.sundaysAndHolidaysInMonth, input.workingDaysInMonth)
       : 0;
 
   return {

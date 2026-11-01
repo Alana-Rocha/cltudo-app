@@ -176,4 +176,42 @@ describe('calculateTermination — matriz de verbas', () => {
     const notice = result.items.find((i) => i.key === 'notice')!;
     expect(notice.amount).toBe(toCents(3000)); // 30 dias = 1 salário
   });
+
+  it('férias proporcionais contam só o período aquisitivo em curso, não o contrato inteiro', () => {
+    // Admissão 01/03/2024, saída 15/06/2026 + 36 dias de aviso = 21/07/2026. Período em curso começou em
+    // 01/03/2026: março a junho completos + 21 dias de julho = 5/12 (CLT art. 146, parágrafo único).
+    const result = calculateTermination(
+      {
+        admissionDate: new Date(Date.UTC(2024, 2, 1)),
+        terminationDate: new Date(Date.UTC(2026, 5, 15)),
+        grossSalary: toCents(3000),
+        terminationType: 'without_cause',
+        noticeMode: 'indemnified',
+        dependents: 0,
+        daysWorkedInLastMonth: 15,
+      },
+      ruleSet2026_01
+    );
+    const vacation = result.items.find((i) => i.key === 'vacation')!;
+    expect(vacation.explanation).toBe('5/12 avos');
+    expect(vacation.amount).toBe(toCents(1250));
+    expect(result.items.find((i) => i.key === 'vacation-bonus')!.amount).toBe(toCents(416.67));
+  });
+
+  it('período aquisitivo completo na data projetada vale 12/12', () => {
+    // Admissão 01/03/2025, saída 29/01/2026 + 30 dias de aviso = 28/02/2026: fecha o 1º período.
+    const result = calculateTermination(
+      {
+        admissionDate: new Date(Date.UTC(2025, 2, 1)),
+        terminationDate: new Date(Date.UTC(2026, 0, 29)),
+        grossSalary: toCents(3000),
+        terminationType: 'without_cause',
+        noticeMode: 'indemnified',
+        dependents: 0,
+        daysWorkedInLastMonth: 29,
+      },
+      ruleSet2026_01
+    );
+    expect(result.items.find((i) => i.key === 'vacation')!.explanation).toBe('12/12 avos');
+  });
 });

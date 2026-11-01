@@ -55,6 +55,14 @@ describe('calculateDsr', () => {
     const dsr = result.items.find((i) => i.key === 'dsr')!;
     expect(dsr.amount).toBe(toCents(400));
   });
+
+  it('não arredonda o valor diário antes de multiplicar: 1.000 ÷ 22 × 8 = 363,64', () => {
+    const result = calculateDsr(
+      { variableAmount: toCents(1000), workingDaysInMonth: 22, sundaysAndHolidaysInMonth: 8 },
+      ruleSet2026_01
+    );
+    expect(result.items.find((i) => i.key === 'dsr')!.amount).toBe(toCents(363.64));
+  });
 });
 
 describe('calculateCompTime', () => {
@@ -84,6 +92,11 @@ describe('calculateProportionalSalary', () => {
     );
     const proportional = result.items.find((i) => i.key === 'proportional')!;
     expect(proportional.amount).toBe(toCents(1500));
+  });
+
+  it('não arredonda o valor diário antes de multiplicar: 2.500 ÷ 30 × 15 = 1.250,00', () => {
+    const result = calculateProportionalSalary({ grossSalary: toCents(2500), daysWorked: 15, dependents: 0 }, ruleSet2026_01);
+    expect(result.totals.gross).toBe(toCents(1250));
   });
 });
 
