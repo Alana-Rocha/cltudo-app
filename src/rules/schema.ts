@@ -39,7 +39,7 @@ const bracketsSchema = z
 export const ruleSetSchema = z
   .object({
     id: z.string().min(1),
-    effectiveFrom: z.string().date(),
+    effectiveFrom: z.iso.date(),
     sources: z.array(z.string().min(1)).min(1),
     minimumWage: z.number().int().positive(),
     inss: z.object({

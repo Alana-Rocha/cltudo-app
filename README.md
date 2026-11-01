@@ -40,7 +40,7 @@ A lista completa, com categorias e calculadoras relacionadas, vive em [src/regis
 
 ## Stack
 
-- [Next.js 14](https://nextjs.org/) (App Router) + React 18 + TypeScript
+- [Next.js 16](https://nextjs.org/) (App Router) + React 19 + TypeScript
 - [Tailwind CSS](https://tailwindcss.com/) para estilo
 - [Zod](https://zod.dev/) para validação dos conjuntos de regras
 - [Vitest](https://vitest.dev/) + Testing Library para testes
@@ -48,7 +48,7 @@ A lista completa, com categorias e calculadoras relacionadas, vive em [src/regis
 
 ## Como rodar
 
-Pré-requisitos: Node.js 18+.
+Pré-requisitos: Node.js 22.12+.
 
 ```bash
 npm install
