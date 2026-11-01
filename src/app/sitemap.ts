@@ -7,6 +7,8 @@ const BASE_URL = site.url;
 export default function sitemap(): MetadataRoute.Sitemap {
   const staticEntries: MetadataRoute.Sitemap = [
     { url: BASE_URL, changeFrequency: 'monthly', priority: 1 },
+    { url: `${BASE_URL}/sobre`, changeFrequency: 'yearly', priority: 0.3 },
+    { url: `${BASE_URL}/contato`, changeFrequency: 'yearly', priority: 0.2 },
     { url: `${BASE_URL}/privacidade`, changeFrequency: 'yearly', priority: 0.2 },
   ];
 

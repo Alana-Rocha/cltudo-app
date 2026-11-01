@@ -36,6 +36,12 @@ export function SiteFooter() {
       <div className="border-t">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-4 text-xs text-gray-500">
           <span>© {new Date().getFullYear()} {site.name}</span>
+          <Link href="/sobre" className="hover:text-brand-700">
+            Sobre
+          </Link>
+          <Link href="/contato" className="hover:text-brand-700">
+            Contato
+          </Link>
           <Link href="/privacidade" className="hover:text-brand-700">
             Política de privacidade
           </Link>

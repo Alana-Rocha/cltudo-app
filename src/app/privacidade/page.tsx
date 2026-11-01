@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { site } from '@/config/site';
 import { CookiePreferencesButton } from '@/components/shared/CookieBanner';
+import { PageSection as Section } from '@/components/shared/PageSection';
 
 export const metadata: Metadata = {
   title: 'Política de privacidade',
@@ -9,15 +10,6 @@ export const metadata: Metadata = {
 };
 
 const LAST_UPDATED = '27 de setembro de 2026';
-
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <section className="mt-8">
-      <h2 className="text-lg font-semibold">{title}</h2>
-      <div className="mt-2 space-y-3 text-gray-600">{children}</div>
-    </section>
-  );
-}
 
 export default function PrivacyPage() {
   return (

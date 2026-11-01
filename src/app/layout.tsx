@@ -10,6 +10,7 @@ import { SiteFooter } from '@/components/shared/SiteFooter';
 import { AdSlot } from '@/components/shared/AdSlot';
 import { CookieBanner } from '@/components/shared/CookieBanner';
 import { ThirdPartyScripts } from '@/components/shared/ThirdPartyScripts';
+import { site } from '@/config/site';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'], display: 'swap' });
@@ -22,6 +23,8 @@ export const metadata: Metadata = {
   description:
     'CLTudo: calcule salário líquido, rescisão, férias, 13º, FGTS e compare CLT x PJ, com as regras de 2026 e o passo a passo de cada conta.',
   applicationName: 'CLTudo',
+  // O script do AdSense só carrega após o consentimento; a meta tag deixa o robô de verificação achar o publisher.
+  other: site.ads.adsenseClient ? { 'google-adsense-account': site.ads.adsenseClient } : {},
 };
 
 // Aplica o tema salvo (ou a preferência do sistema) antes da 1ª pintura,
