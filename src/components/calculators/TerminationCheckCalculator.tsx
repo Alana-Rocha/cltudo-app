@@ -1,6 +1,7 @@
 'use client';
 
-import { AlertTriangle, CheckCircle2, CircleAlert } from 'lucide-react';
+import { useState } from 'react';
+import { AlertTriangle, CheckCircle2, CircleAlert, FileUp } from 'lucide-react';
 import { usePersistedState } from '@/hooks/usePersistedState';
 import { useLiveCalculation } from '@/hooks/useLiveCalculation';
 import { CurrencyInput } from '@/components/ui/CurrencyInput';
@@ -10,6 +11,7 @@ import { Disclaimer } from '@/components/shared/Disclaimer';
 import { projectedContractEnd } from '@/engine/termination';
 import {
   applicableItems,
+  CHECKED_ITEMS,
   compareTermination,
   latePaymentFine,
   ROUNDING_TOLERANCE,
@@ -23,7 +25,9 @@ import type { CalculationResult } from '@/engine/types';
 import { getRulesFor } from '@/rules';
 import { formatBrDate, parseBrDate } from '@/lib/dates';
 import { formatCurrency } from '@/lib/format';
-import { toCents, type Cents } from '@/lib/money';
+import { maskBrCurrencyInput, toCents, type Cents } from '@/lib/money';
+import { extractPdfText, MAX_PDF_BYTES } from '@/lib/pdfText';
+import { parseTrctText, type TrctReading } from '@/lib/trctParser';
 import { parseBrNumber, useTerminationForm } from './useTerminationForm';
 
 const STORAGE_PREFIX = 'conferir-rescisao';
@@ -38,6 +42,94 @@ const RECEIVED_FIELDS: Record<CheckedItem, { label: string; hint?: string }> = {
   irrf: { label: 'IRRF descontado no TRCT' },
   fgtsFine: { label: 'Multa do FGTS depositada', hint: 'Não aparece no TRCT: veja no extrato do app FGTS.' },
 };
+
+function centsToField(cents: Cents): string {
+  return maskBrCurrencyInput(String(cents));
+}
+
+type UploadStatus = { kind: 'idle' | 'reading' | 'done' | 'error'; message: string };
+
+/**
+ * Lê o TRCT em PDF no próprio navegador e preenche os campos para a pessoa conferir.
+ * Experimental: a leitura é pelo nome das verbas e pode errar num layout diferente.
+ */
+function TrctUpload({ onRead }: { onRead: (reading: TrctReading) => void }) {
+  const [status, setStatus] = useState<UploadStatus>({ kind: 'idle', message: '' });
+
+  async function handleFile(file: File) {
+    if (file.size > MAX_PDF_BYTES) {
+      setStatus({ kind: 'error', message: 'O arquivo passa de 5 MB e não parece ser um TRCT. Preencha os valores à mão.' });
+      return;
+    }
+    const data = await file.arrayBuffer();
+    if (new TextDecoder().decode(data.slice(0, 5)) !== '%PDF-') {
+      setStatus({ kind: 'error', message: 'Esse arquivo não é um PDF. Anexe o TRCT em PDF ou preencha os valores à mão.' });
+      return;
+    }
+
+    setStatus({ kind: 'reading', message: 'Lendo o documento…' });
+    let text: string;
+    try {
+      text = await extractPdfText(data);
+    } catch {
+      setStatus({ kind: 'error', message: 'Não conseguimos abrir este PDF (ele pode estar protegido por senha). Preencha os valores à mão.' });
+      return;
+    }
+    if (text.trim() === '') {
+      setStatus({
+        kind: 'error',
+        message: 'Este PDF não tem texto: parece ser uma foto ou digitalização. Por enquanto, preencha os valores à mão.',
+      });
+      return;
+    }
+
+    const reading = parseTrctText(text);
+    if (reading.found.length === 0) {
+      setStatus({ kind: 'error', message: 'Não reconhecemos as verbas deste documento. Preencha os valores à mão.' });
+      return;
+    }
+    onRead(reading);
+    const labels = CHECKED_ITEMS.filter((item) => reading.found.includes(item.key)).map((item) => item.label.toLowerCase());
+    const contract = reading.admissionDate || reading.terminationDate || reading.gross ? ' Também preenchemos os dados do contrato que estavam no termo.' : '';
+    setStatus({
+      kind: 'done',
+      message: `Lemos ${labels.length} ${labels.length === 1 ? 'valor' : 'valores'} do TRCT: ${labels.join(', ')}.${contract} Confira cada campo antes de confiar no resultado.`,
+    });
+  }
+
+  return (
+    <div className="space-y-2 rounded-md border border-dashed p-4">
+      <div className="flex items-center gap-2">
+        <FileUp className="h-4 w-4 text-brand-700" aria-hidden="true" />
+        <label htmlFor="trct-file" className="text-sm font-medium">
+          Anexar o TRCT em PDF
+        </label>
+        <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-800">experimental</span>
+      </div>
+      <p id="trct-file-hint" className="text-xs text-gray-500">
+        O arquivo é lido no seu navegador e não é enviado a lugar nenhum. Os valores encontrados preenchem os campos abaixo.
+      </p>
+      <input
+        id="trct-file"
+        type="file"
+        accept="application/pdf,.pdf"
+        aria-describedby="trct-file-hint"
+        disabled={status.kind === 'reading'}
+        onChange={(event) => {
+          const file = event.target.files?.[0];
+          if (file) void handleFile(file);
+        }}
+        className="block w-full text-sm text-gray-600 file:mr-3 file:rounded-md file:border file:bg-white file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-gray-700 hover:file:border-brand-500"
+      />
+      <p
+        role="status"
+        className={`text-xs ${status.kind === 'error' ? 'text-red-600' : status.kind === 'done' ? 'text-emerald-700' : 'text-gray-500'}`}
+      >
+        {status.message}
+      </p>
+    </div>
+  );
+}
 
 function todayUtc(): Date {
   const now = new Date();
@@ -227,7 +319,21 @@ export function TerminationCheckCalculator() {
 
         <fieldset className="space-y-4 border-t pt-4">
           <legend className="text-sm font-semibold">O que você recebeu</legend>
-          <p className="text-xs text-gray-500">Copie do Termo de Rescisão (TRCT). Preencha só o que quiser conferir.</p>
+          <TrctUpload
+            onRead={(reading) => {
+              form.prefill({
+                admissionDate: reading.admissionDate,
+                terminationDate: reading.terminationDate,
+                gross: reading.gross !== undefined ? centsToField(reading.gross) : undefined,
+                terminationType: reading.terminationType,
+              });
+              setReceivedText((previous) => ({
+                ...previous,
+                ...Object.fromEntries(Object.entries(reading.received).map(([key, cents]) => [key, centsToField(cents)])),
+              }));
+            }}
+          />
+          <p className="text-xs text-gray-500">Ou copie do Termo de Rescisão (TRCT). Preencha só o que quiser conferir.</p>
           {applicableItems(result).map(({ key }) => (
             <CurrencyInput
               key={key}

@@ -209,5 +209,14 @@ export function useTerminationForm(storagePrefix: string) {
     );
   }
 
-  return { input, outcome, renderFields };
+  /** Preenche o contrato com o que foi lido de um TRCT; só troca o que veio no documento. */
+  function prefill(values: { admissionDate?: string; terminationDate?: string; gross?: string; terminationType?: TerminationType }) {
+    if (values.admissionDate) setAdmissionDate(values.admissionDate);
+    if (values.terminationDate) setTerminationDate(values.terminationDate);
+    if (values.gross) setGross(values.gross);
+    if (values.terminationType) setTerminationType(values.terminationType);
+    setDaysWorkedTouched(false); // o saldo de dias volta a ser sugerido pelas novas datas
+  }
+
+  return { input, outcome, renderFields, prefill };
 }
