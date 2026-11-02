@@ -3,7 +3,7 @@ import { add, divide, multiply, subtract, type Cents } from '@/lib/money';
 import { calculateInss } from './inss';
 import { calculateIrrf } from './irrf';
 import type { CalculationResult } from './types';
-import { formatDecimal } from '@/lib/format';
+import { formatCurrency, formatDecimal } from '@/lib/format';
 
 export type VacationInput = {
   grossSalary: Cents;
@@ -57,6 +57,12 @@ export function calculateVacation(input: VacationInput, rules: RuleSet): Calcula
         `Com ${input.unjustifiedAbsences} falta(s) injustificada(s) no período aquisitivo, o limite de dias de férias é ${maxDays} (CLT art. 130).`
       );
     }
+  }
+  // Sem imposto a reduzir, mudar os dependentes não altera nada: explica para não parecer erro.
+  if (input.dependents > 0 && taxableVacation <= rules.irrf.reducer.fullExemptionUpTo) {
+    warnings.push(
+      `Férias + 1/3 até ${formatCurrency(rules.irrf.reducer.fullExemptionUpTo)}: o IRRF fica zerado pela Lei 15.270/2025, por isso os dependentes não alteram este valor.`
+    );
   }
 
   return {

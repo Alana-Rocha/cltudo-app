@@ -58,4 +58,30 @@ describe('calculateVacation', () => {
     expect(result.items.find((i) => i.key === 'taken')!.amount).toBe(toCents(2000));
     expect(result.items.find((i) => i.key === 'taken-bonus')!.amount).toBe(toCents(666.67));
   });
+
+  it('dependentes reduzem o IRRF das férias acima da faixa de isenção', () => {
+    // Férias + 1/3 = 6.666,67; INSS 734,84; redutor 978,62 − 0,133145 × 6.666,67 = 90,99
+    // 0 dep.: 5.931,83 × 27,5% − 908,73 − 90,99 = 631,53
+    // 6 dep.: (5.931,83 − 6 × 189,59) × 27,5% − 908,73 − 90,99 = 318,71
+    const irrfWith = (dependents: number) =>
+      calculateVacation({ grossSalary: toCents(5000), daysTaken: 30, daysSold: 0, dependents }, ruleSet2026_01).items.find(
+        (i) => i.key === 'irrf'
+      )!.amount;
+    expect(irrfWith(0)).toBe(toCents(631.53));
+    expect(irrfWith(6)).toBe(toCents(318.71));
+  });
+
+  describe('aviso de IRRF zerado pela Lei 15.270/2025', () => {
+    const warningsFor = (grossSalary: number, dependents: number) =>
+      calculateVacation({ grossSalary: toCents(grossSalary), daysTaken: 30, daysSold: 0, dependents }, ruleSet2026_01).warnings;
+
+    it('explica por que os dependentes não mudam o valor quando férias + 1/3 ficam até R$ 5.000', () => {
+      expect(warningsFor(3750, 6)).toEqual([expect.stringMatching(/IRRF fica zerado.*dependentes não alteram/)]);
+    });
+
+    it('não aparece sem dependentes nem acima da faixa de isenção', () => {
+      expect(warningsFor(3750, 0)).toEqual([]);
+      expect(warningsFor(3751, 6)).toEqual([]);
+    });
+  });
 });

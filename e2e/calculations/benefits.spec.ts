@@ -1,4 +1,4 @@
-import { test } from '../fixtures';
+import { expect, test } from '../fixtures';
 
 /*
  * Cenários com salário de R$ 2.000 ou R$ 3.000: o IRRF fica zerado em qualquer leitura das regras
@@ -30,6 +30,19 @@ test.describe('Férias', () => {
     await calculator.expectLineItem('1/3 do abono', 'R$ 222,22');
     await calculator.expectLineItem('INSS sobre férias', 'R$ 135,68');
     await calculator.expectHeadline('Valor líquido das férias', 'R$ 2.530,98');
+  });
+
+  test('R$ 2.556 com 6 dependentes: IRRF zerado e aviso explicando por quê', async ({ calculator }) => {
+    // 2.556,00 + 852,00 = 3.408,00; INSS 3.408,00 × 12% − 111,40 = 297,56; líquido 3.110,44
+    await calculator.open('calculadora-ferias');
+    await calculator.fill('Salário bruto', '2.556,00');
+    await expect(calculator.result.getByText(/os dependentes não alteram este valor/)).toHaveCount(0);
+
+    await calculator.fill('Número de dependentes', '6');
+
+    await calculator.expectLineItem('INSS sobre férias', 'R$ 297,56');
+    await calculator.expectHeadline('Valor líquido das férias', 'R$ 3.110,44');
+    await expect(calculator.result.getByText(/os dependentes não alteram este valor/)).toBeVisible();
   });
 });
 
