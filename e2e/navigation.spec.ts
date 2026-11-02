@@ -1,3 +1,4 @@
+import type { Page } from '@playwright/test';
 import { registry } from '@/registry';
 import { expect, test } from './fixtures';
 
@@ -67,6 +68,44 @@ test.describe('Navegação entre páginas', () => {
     await expectPillOver('CLT x PJ');
     await page.mouse.move(0, 500);
     await expectPillOver('Rescisão');
+  });
+
+  test.describe('animação ao trocar de página', () => {
+    test.beforeEach(async ({ page }) => {
+      await page.addInitScript(() => {
+        const original = Element.prototype.animate;
+        Element.prototype.animate = function (...args) {
+          if (this.tagName === 'MAIN') document.documentElement.dataset.mainAnimations = String(Number(document.documentElement.dataset.mainAnimations ?? 0) + 1);
+          return original.apply(this, args);
+        };
+      });
+    });
+    const mainAnimations = (page: Page) => page.evaluate(() => Number(document.documentElement.dataset.mainAnimations ?? 0));
+    // Clicar antes da hidratação vira carga completa da página, que não anima.
+    const openHome = async (page: Page) => {
+      await page.goto('/');
+      await page.waitForLoadState('networkidle');
+    };
+
+    test('anima ao clicar num card, mas não na carga inicial', async ({ page }) => {
+      await openHome(page);
+      expect(await mainAnimations(page)).toBe(0);
+
+      await page.locator('main a[href="/calculadora-ferias"]').first().click();
+
+      await expect(page).toHaveURL('/calculadora-ferias');
+      expect(await mainAnimations(page)).toBe(1);
+    });
+
+    test('respeita a preferência de reduzir movimento', async ({ page }) => {
+      await page.emulateMedia({ reducedMotion: 'reduce' });
+      await openHome(page);
+
+      await page.locator('main a[href="/calculadora-ferias"]').first().click();
+
+      await expect(page).toHaveURL('/calculadora-ferias');
+      expect(await mainAnimations(page)).toBe(0);
+    });
   });
 
   test('breadcrumb leva de volta ao início', async ({ page }) => {

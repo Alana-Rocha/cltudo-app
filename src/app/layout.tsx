@@ -5,6 +5,7 @@ import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import Link from 'next/link';
 import { RelatedCalculators } from '@/components/shared/RelatedCalculators';
 import { Breadcrumb } from '@/components/shared/Breadcrumb';
+import { AnimatedMain } from '@/components/shared/AnimatedMain';
 import { SiteNav } from '@/components/shared/SiteNav';
 import { SiteFooter } from '@/components/shared/SiteFooter';
 import { AdSlot } from '@/components/shared/AdSlot';
@@ -66,12 +67,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </div>
           </div>
         </header>
-        <main className="mx-auto max-w-6xl px-4 py-8 sm:py-10">
+        <AnimatedMain className="mx-auto max-w-6xl px-4 py-8 sm:py-10">
           <Breadcrumb />
           {children}
           <AdSlot />
           <RelatedCalculators />
-        </main>
+        </AnimatedMain>
         <SiteFooter />
         <CookieBanner />
         <ThirdPartyScripts />
