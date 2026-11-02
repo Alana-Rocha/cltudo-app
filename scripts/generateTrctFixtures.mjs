@@ -94,7 +94,8 @@ function officialModelTrct() {
 }
 
 // Acordo (art. 484-A): admissão 10/02/2025, afastamento 20/10/2026, R$ 3.000, aviso indenizado de 33 dias pela
-// metade, 10 dias de férias vencidas, R$ 150 de reembolso de VT e R$ 500 de empréstimo consignado.
+// metade (projeta 17 dias, até 06/11/2026), 10 dias de férias vencidas, R$ 150 de reembolso de VT e R$ 500 de
+// empréstimo consignado.
 const agreementVerbas = (vacationProportional, vacationThird) => [
   ['50 Saldo de 20 dias<br>(líquido de 0 /faltas e DSR)', '2.000,00'],
   ['51 Comissões', '0,00'],
@@ -106,9 +107,9 @@ const agreementVerbas = (vacationProportional, vacationThird) => [
   ['59 Reflexo do DSR sobre<br>Salário Variável', '0,00'],
   ['60 Multa Art. 477, § 8º/CLT', '0,00'],
   ['62 Salário-Família', '0,00'],
-  ['63 13º Salário Proporcional<br>11/12 avos', '2.750,00'],
+  ['63 13º Salário Proporcional<br>10/12 avos', '2.500,00'],
   ['64 13º Salário-Exerc.<br>- /12 avos', '0,00'],
-  ['65 Férias Proporc<br>10/12 avos', vacationProportional],
+  ['65 Férias Proporc<br>9/12 avos', vacationProportional],
   ['66 Férias Venc. Per. Aquis.<br>10/02/2025 a 09/02/2026', '1.000,00'],
   ['68 Terço Constituc. de Férias', vacationThird],
   ['69 Aviso Prévio Indenizado', '1.650,00'],
@@ -124,11 +125,11 @@ const agreementDeductions = (net) => [
   ['102 Adiantamento 13º Salário', '0,00'],
   ['103 Aviso Prévio Indenizado', '0,00'],
   ['112.1 Previdência Social', '155,69'],
-  ['112.2 Prev. Social - 13º Salário', '223,19'],
+  ['112.2 Prev. Social - 13º Salário', '200,69'],
   ['114.1 IRRF', '0,00'],
   ['114.2 IRRF sobre 13º Salário', '0,00'],
   ['115.7 Crédito do trabalhador', '500,00'],
-  ['<b>TOTAL DEDUÇÕES</b>', '878,88'],
+  ['<b>TOTAL DEDUÇÕES</b>', '856,38'],
   ['<b>VALOR LÍQUIDO</b>', net],
 ];
 const agreement = {
@@ -140,17 +141,17 @@ const agreement = {
 
 const FIXTURES = {
   'official-model.pdf': officialModelTrct(),
-  // Bate com o motor: verbas 2.000 + 2.750 + 4.666,66 + 1.650 + 150 − 378,88 de INSS − 500 = 10.337,78
+  // Bate com o motor: verbas 2.000 + 2.500 + 4.333,33 + 1.650 + 150 − 356,38 de INSS − 500 = 9.776,95
   'payroll-agreement.pdf': payrollSystemTrct({
     ...agreement,
-    verbas: agreementVerbas('2.500,00', '1.166,66'),
-    deductions: agreementDeductions('10.337,78'),
+    verbas: agreementVerbas('2.250,00', '1.083,33'),
+    deductions: agreementDeductions('9.776,95'),
   }),
-  // Mesmo acordo pagando 7/12 de férias proporcionais em vez de 10/12: faltam 750 + 250 = 1.000
+  // Mesmo acordo pagando 6/12 de férias proporcionais em vez de 9/12: faltam 750 + 250 = 1.000
   'payroll-agreement-short-vacation.pdf': payrollSystemTrct({
     ...agreement,
-    verbas: agreementVerbas('1.750,00', '916,66'),
-    deductions: agreementDeductions('9.337,78'),
+    verbas: agreementVerbas('1.500,00', '833,33'),
+    deductions: agreementDeductions('8.776,95'),
   }),
 };
 

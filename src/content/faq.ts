@@ -112,6 +112,10 @@ const FAQ_BY_SLUG: Record<string, (rules: RuleSet) => FaqItem[]> = {
       answer: 'Não. Sistemas de folha arredondam de jeitos diferentes, então diferenças de até R$ 1,00 aparecem como "confere". Diferenças maiores costumam vir de avos contados errado, médias de horas extras fora da conta ou desconto a mais.',
     },
     {
+      question: 'Por que o acordo (art. 484-A) mostra uma faixa de valores?',
+      answer: 'No acordo, o aviso indenizado é pago pela metade, mas a lei não diz se ele projeta metade dos dias ou todos para os avos de 13º e férias. A conta usa metade dos dias, como costumam fazer os guias de cálculo, e aceita qualquer valor até o da leitura com todos os dias, sem apontar erro.',
+    },
+    {
       question: 'Por que meu valor pode ser diferente mesmo com tudo certo?',
       answer: 'Convenções coletivas podem garantir verbas extras, e médias de comissões e horas extras mudam o aviso, o 13º e as férias. A conta usa a CLT e as tabelas oficiais vigentes na data do desligamento; informe a média de variáveis para chegar mais perto.',
     },

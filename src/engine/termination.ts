@@ -1,6 +1,6 @@
 import type { RuleSet } from '@/rules/schema';
 import { add, clampToZero, divide, multiply, subtract, type Cents } from '@/lib/money';
-import { countAvos, formatBrDate, fullYearsBetween } from '@/lib/dates';
+import { addDays, countAvos, formatBrDate, fullYearsBetween } from '@/lib/dates';
 import { calculateInss } from './inss';
 import { calculateIrrf } from './irrf';
 import { calculateNotice, type NoticeReason } from './notice';
@@ -22,7 +22,15 @@ export type TerminationInput = {
   averageVariables?: Cents;
   expiredVacationDays?: number; // 0..30, dias não gozados de período(s) aquisitivo(s) já vencido(s)
   expiredVacationDoubled?: boolean; // período concessivo (12 meses) já expirado — CLT art. 137 / Súmula 450 TST
+  agreementProjection?: AgreementProjection; // só no acordo com aviso indenizado; o padrão é 'half'
 };
+
+/**
+ * O art. 484-A manda pagar o aviso indenizado pela metade, mas não diz quantos dias ele projeta o contrato.
+ * 'half' projeta metade dos dias, como costumam fazer os guias de cálculo; 'full' projeta todos, a leitura
+ * mais favorável ao trabalhador.
+ */
+export type AgreementProjection = 'half' | 'full';
 
 /**
  * Verba matrix from Fase 1 §3.8. `true` = due, `false` = not due, number =
@@ -65,12 +73,14 @@ function isNoticeIndemnified(input: Pick<TerminationInput, 'terminationType' | '
  * aviso (CLT art. 487, §1º; OJ 82 e 83 da SDI-1 do TST). É daí que contam os avos e a prescrição.
  */
 export function projectedContractEnd(
-  input: Pick<TerminationInput, 'admissionDate' | 'terminationDate' | 'terminationType' | 'noticeMode'>,
+  input: Pick<TerminationInput, 'admissionDate' | 'terminationDate' | 'terminationType' | 'noticeMode' | 'agreementProjection'>,
   rules: RuleSet
 ): Date {
   if (!isNoticeIndemnified(input)) return input.terminationDate;
-  return calculateNotice(input.admissionDate, input.terminationDate, noticeReasonFor(input.terminationType), rules)
-    .projectedEndDate;
+  const notice = calculateNotice(input.admissionDate, input.terminationDate, noticeReasonFor(input.terminationType), rules);
+  if (NOTICE_DUE[input.terminationType] !== 0.5 || input.agreementProjection === 'full') return notice.projectedEndDate;
+  // Aviso de número ímpar de dias: o dia que sobra da metade conta inteiro.
+  return addDays(input.terminationDate, Math.ceil(notice.days / 2));
 }
 
 export function calculateTermination(input: TerminationInput, rules: RuleSet): CalculationResult {
@@ -102,10 +112,12 @@ export function calculateTermination(input: TerminationInput, rules: RuleSet): C
   if (isNoticeIndemnified(input)) {
     const fraction = noticeRule === 0.5 ? 0.5 : 1;
     noticeAmount = multiply(remunerationBase, (notice.days / 30) * fraction);
-    projectedDate = notice.projectedEndDate;
+    projectedDate = projectedContractEnd(input, rules);
     if (fraction === 0.5) {
       warnings.push(
-        'No acordo (art. 484-A), a lei manda pagar o aviso pela metade, mas não diz se a projeção dos avos de 13º e férias também cai pela metade. Esta conta projeta os dias inteiros, a leitura mais favorável ao trabalhador; muitos sistemas de folha projetam só metade, o que pode dar um avo a menos.'
+        input.agreementProjection === 'full'
+          ? 'Esta conta projeta todos os dias do aviso, a leitura mais favorável ao trabalhador no acordo (art. 484-A).'
+          : 'No acordo (art. 484-A), a lei manda pagar o aviso pela metade, mas não diz se a projeção dos avos de 13º e férias também cai pela metade. Esta conta projeta metade dos dias, como costumam fazer os guias de cálculo; pela leitura mais favorável ao trabalhador, que projeta todos os dias, pode haver um avo a mais.'
       );
     }
     included.push(

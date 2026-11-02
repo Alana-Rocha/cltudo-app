@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { calculateTermination } from '../termination';
+import { calculateTermination, projectedContractEnd, type TerminationInput } from '../termination';
+import type { CalculationResult } from '../types';
 import { ruleSet2026_01 } from '@/rules/2026-01';
 import { toCents } from '@/lib/money';
 
@@ -63,6 +64,43 @@ describe('calculateTermination — matriz de verbas', () => {
     expect(result.included.some((s) => s.includes('50% por acordo'))).toBe(true);
     expect(result.included.some((s) => s.includes('Multa do FGTS: 20%'))).toBe(true);
     expect(result.included.some((s) => s.includes('Saque do FGTS: 80%'))).toBe(true);
+  });
+
+  describe('acordo (art. 484-A): projeção do aviso pela metade ou inteira', () => {
+    // 10/02/2025 a 20/10/2026, R$ 3.000, aviso de 33 dias: metade projeta até 06/11 e todos até 22/11.
+    const agreement: TerminationInput = {
+      admissionDate: new Date(Date.UTC(2025, 1, 10)),
+      terminationDate: new Date(Date.UTC(2026, 9, 20)),
+      grossSalary: toCents(3000),
+      terminationType: 'agreement',
+      noticeMode: 'indemnified',
+      dependents: 0,
+      daysWorkedInLastMonth: 20,
+    };
+    const amount = (result: CalculationResult, key: string) => result.items.find((i) => i.key === key)!.amount;
+
+    it('por padrão projeta metade dos dias, arredondando para cima', () => {
+      const result = calculateTermination(agreement, ruleSet2026_01);
+      expect(projectedContractEnd(agreement, ruleSet2026_01)).toEqual(new Date(Date.UTC(2026, 10, 6)));
+      expect(amount(result, 'thirteenth')).toBe(toCents(2500)); // 10/12
+      expect(amount(result, 'vacation')).toBe(toCents(2250)); // 9/12
+      expect(result.warnings.some((w) => w.includes('projeta metade dos dias'))).toBe(true);
+    });
+
+    it("com 'full' projeta todos os dias", () => {
+      const full = { ...agreement, agreementProjection: 'full' as const };
+      const result = calculateTermination(full, ruleSet2026_01);
+      expect(projectedContractEnd(full, ruleSet2026_01)).toEqual(new Date(Date.UTC(2026, 10, 22)));
+      expect(amount(result, 'thirteenth')).toBe(toCents(2750)); // 11/12
+      expect(amount(result, 'vacation')).toBe(toCents(2500)); // 10/12
+    });
+
+    it('as duas leituras pagam o mesmo aviso, pela metade', () => {
+      const half = calculateTermination(agreement, ruleSet2026_01);
+      const full = calculateTermination({ ...agreement, agreementProjection: 'full' }, ruleSet2026_01);
+      expect(amount(half, 'notice')).toBe(toCents(1650));
+      expect(amount(full, 'notice')).toBe(toCents(1650));
+    });
   });
 
   it('pedido de demissão sem cumprir aviso: desconto de até 30 dias', () => {

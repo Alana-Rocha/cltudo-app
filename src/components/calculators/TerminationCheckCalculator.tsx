@@ -8,7 +8,7 @@ import { CurrencyInput } from '@/components/ui/CurrencyInput';
 import { DateInput } from '@/components/ui/DateInput';
 import { CalculationBreakdown } from '@/components/shared/CalculationBreakdown';
 import { Disclaimer } from '@/components/shared/Disclaimer';
-import { projectedContractEnd } from '@/engine/termination';
+import { calculateTermination, projectedContractEnd } from '@/engine/termination';
 import {
   applicableItems,
   CHECKED_ITEMS,
@@ -171,21 +171,31 @@ function RowStatus({ row }: { row: CheckRow }) {
   return <span className="font-medium text-amber-700">{formatCurrency(-row.shortfall)} a mais</span>;
 }
 
+function DueAmount({ row }: { row: CheckRow }) {
+  if (!row.dueRange) return <>{formatCurrency(row.due)}</>;
+  return (
+    <>
+      <span className="block">{formatCurrency(row.dueRange.low)}</span>
+      <span className="block text-xs text-gray-500">a {formatCurrency(row.dueRange.high)}</span>
+    </>
+  );
+}
+
 function CheckSummary({
   due,
+  alternative,
   received,
   lateFine,
   deadlines,
-  halfNoticeAgreement,
 }: {
   due: CalculationResult;
+  /** Acordo com aviso indenizado: o cálculo pela outra leitura sobre a projeção dos avos (ver o aviso do motor). */
+  alternative?: CalculationResult;
   received: ReceivedAmounts;
   lateFine: { fine: Cents; daysLate: number; deadline: Date } | null;
   deadlines: Deadline[];
-  /** Acordo com aviso indenizado: há duas leituras sobre a projeção dos avos (ver o aviso do motor). */
-  halfNoticeAgreement: boolean;
 }) {
-  const check = compareTermination(due, received);
+  const check = compareTermination(due, received, alternative);
   const fine = lateFine?.fine ?? 0;
   const total = check.totalShortfall + fine;
   const today = todayUtc();
@@ -244,7 +254,7 @@ function CheckSummary({
                     <RowStatus row={row} />
                   </span>
                 </th>
-                <td className="whitespace-nowrap px-2 py-2.5 text-right tabular-nums">{formatCurrency(row.due)}</td>
+                <td className="whitespace-nowrap px-2 py-2.5 text-right tabular-nums"><DueAmount row={row} /></td>
                 <td className="whitespace-nowrap px-2 py-2.5 text-right tabular-nums">
                   {row.received === undefined ? '—' : formatCurrency(row.received)}
                 </td>
@@ -264,10 +274,11 @@ function CheckSummary({
         </p>
       )}
 
-      {halfNoticeAgreement && check.informedCount > 0 && (
+      {check.rows.some((row) => row.dueRange) && (
         <p className="border-t bg-amber-50 px-6 py-3 text-xs text-amber-800">
-          Acordo (art. 484-A): diferenças no 13º e nas férias podem vir só da forma de projetar o aviso pela metade, um
-          ponto em que a lei não é clara. Veja a explicação no detalhamento abaixo antes de cobrar a empresa.
+          Acordo (art. 484-A): a lei não diz se o aviso pago pela metade também projeta só metade dos dias nos avos de 13º
+          e férias. Por isso, algumas verbas têm uma faixa: da menor conta (metade dos dias) à maior (todos os dias). Um
+          valor dentro da faixa não é tratado como erro.
         </p>
       )}
 
@@ -331,6 +342,10 @@ export function TerminationCheckCalculator() {
   }
 
   const input = form.input;
+  const alternative =
+    input?.terminationType === 'agreement' && input.noticeMode === 'indemnified'
+      ? calculateTermination({ ...input, agreementProjection: 'full' }, getRulesFor(input.terminationDate))
+      : undefined;
   const deadlines = input
     ? terminationDeadlines({
         terminationDate: input.terminationDate,
@@ -396,10 +411,10 @@ export function TerminationCheckCalculator() {
           <>
             <CheckSummary
               due={result}
+              alternative={alternative}
               received={received}
               lateFine={lateFine}
               deadlines={deadlines}
-              halfNoticeAgreement={input?.terminationType === 'agreement' && input.noticeMode === 'indemnified'}
             />
             <h2 className="mb-3 text-lg font-semibold">Como calculamos o valor devido</h2>
             <CalculationBreakdown result={result} headline={{ label: 'Total líquido devido (com a multa do FGTS)' }} />

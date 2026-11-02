@@ -70,6 +70,69 @@ describe('compareTermination', () => {
   });
 });
 
+describe('compareTermination — acordo (art. 484-A), com faixa entre as duas leituras', () => {
+  // 10/02/2025 a 20/10/2026, R$ 3.000: 13º de 2.500 (metade dos dias) a 2.750 (todos os dias).
+  const agreement: TerminationInput = {
+    admissionDate: utc(2025, 2, 10),
+    terminationDate: utc(2026, 10, 20),
+    grossSalary: toCents(3000),
+    terminationType: 'agreement',
+    noticeMode: 'indemnified',
+    dependents: 0,
+    daysWorkedInLastMonth: 20,
+  };
+  const half = calculateTermination(agreement, ruleSet2026_01);
+  const full = calculateTermination({ ...agreement, agreementProjection: 'full' }, ruleSet2026_01);
+  const row = (received: Parameters<typeof compareTermination>[1], key: string) =>
+    compareTermination(half, received, full).rows.find((r) => r.key === key)!;
+
+  it('só as verbas afetadas pela projeção têm faixa', () => {
+    expect(row({}, 'thirteenth').dueRange).toEqual({ low: toCents(2500), high: toCents(2750) });
+    expect(row({}, 'balance').dueRange).toBeUndefined();
+    expect(row({}, 'notice').dueRange).toBeUndefined();
+  });
+
+  it.each([
+    ['na menor leitura', 2500],
+    ['entre as duas leituras', 2625],
+    ['na maior leitura', 2750],
+  ])('13º %s confere', (_, value) => {
+    const received = { thirteenth: toCents(value) };
+    expect(row(received, 'thirteenth')).toMatchObject({ status: 'ok', shortfall: 0 });
+    expect(compareTermination(half, received, full).totalShortfall).toBe(0);
+  });
+
+  it('abaixo da faixa, falta a diferença até a menor leitura', () => {
+    expect(row({ thirteenth: toCents(2000) }, 'thirteenth')).toMatchObject({ status: 'short', shortfall: toCents(500) });
+  });
+
+  it('acima da faixa, sobra a diferença até a maior leitura', () => {
+    expect(row({ thirteenth: toCents(3000) }, 'thirteenth')).toMatchObject({ status: 'over', shortfall: toCents(-250) });
+  });
+
+  it('desconto de INSS acima da faixa é falta; dentro dela, confere', () => {
+    const { low, high } = row({}, 'inss').dueRange!;
+    expect(row({ inss: high + toCents(50) }, 'inss')).toMatchObject({ status: 'short', shortfall: toCents(50) });
+    expect(row({ inss: Math.round((low + high) / 2) }, 'inss').status).toBe('ok');
+  });
+
+  it('líquido dentro da faixa não esconde uma verba abaixo dela', () => {
+    const { low, high } = row({}, 'net').dueRange!;
+    const check = compareTermination(half, { net: Math.round((low + high) / 2), vacation: row({}, 'vacation').dueRange!.low - toCents(300) }, full);
+    expect(check.rows.find((r) => r.key === 'net')!.status).toBe('ok');
+    expect(check.totalShortfall).toBe(toCents(300));
+  });
+
+  it('o prazo para reclamar usa a data mais curta, a de metade dos dias', () => {
+    const deadlines = terminationDeadlines({
+      terminationDate: agreement.terminationDate,
+      projectedEndDate: projectedContractEnd(agreement, ruleSet2026_01),
+      terminationType: 'agreement',
+    });
+    expect(deadlines.find((d) => d.key === 'lawsuit')!.until).toEqual(utc(2028, 11, 6));
+  });
+});
+
 describe('terminationDeadlines', () => {
   const projectedEndDate = projectedContractEnd(input, ruleSet2026_01);
 

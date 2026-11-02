@@ -81,6 +81,45 @@ test.describe('Conferir rescisão', () => {
     await expect(calculator.result.getByRole('region', { name: 'Prazos' })).not.toContainText('seguro-desemprego');
   });
 
+  test.describe('acordo (art. 484-A)', () => {
+    /*
+     * Admissão 10/02/2025, saída 20/10/2026, R$ 3.000, aviso indenizado de 33 dias pago pela metade.
+     * 13º: 2.500 projetando metade dos dias, 2.750 projetando todos. O relógio dos testes não afeta a conta.
+     */
+    async function fillAgreement(calculator: CalculatorPage) {
+      await calculator.open('conferir-rescisao');
+      await calculator.fill('Data de admissão', '10/02/2025');
+      await calculator.fill('Data de desligamento', '20/10/2026');
+      await calculator.fill('Salário bruto', '3.000,00');
+      await calculator.choose('Tipo de desligamento', 'Acordo (art. 484-A)');
+    }
+
+    test('valor entre as duas leituras confere, com a faixa e a explicação', async ({ page, calculator }) => {
+      await fillAgreement(calculator);
+      await calculator.fill('13º proporcional recebido', '2.625,00');
+
+      const row = page.getByRole('row', { name: /13º proporcional/ });
+      await expect(row).toContainText('confere');
+      await expect(row).toContainText(/2\.500,00\s*a R\$\s2\.750,00/);
+      await expect(page.getByTestId('check-headline')).toHaveText('R$ 0,00');
+      await expect(calculator.result.getByText(/Um\s+valor dentro da faixa não é tratado como erro/)).toBeVisible();
+    });
+
+    test('valor abaixo da faixa aponta quanto falta até a menor leitura', async ({ page, calculator }) => {
+      await fillAgreement(calculator);
+      await calculator.fill('13º proporcional recebido', '2.000,00');
+
+      await expect(page.getByRole('row', { name: /13º proporcional/ })).toContainText('faltam R$ 500,00');
+      await expect(page.getByTestId('check-headline')).toHaveText('R$ 500,00');
+    });
+
+    test('o prazo para reclamar conta metade dos dias do aviso', async ({ calculator }) => {
+      await fillAgreement(calculator);
+      const deadlines = calculator.result.getByRole('region', { name: 'Prazos' });
+      await expect(deadlines.getByRole('listitem').filter({ hasText: 'Justiça do Trabalho' })).toContainText('até 06/11/2028');
+    });
+  });
+
   test.describe('link compartilhado', () => {
     test.use({ permissions: ['clipboard-read', 'clipboard-write'] });
 

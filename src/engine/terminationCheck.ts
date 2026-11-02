@@ -21,6 +21,8 @@ export type CheckRow = {
   key: CheckedItem;
   label: string;
   due: Cents;
+  /** Quando há duas leituras válidas da lei, o valor devido é uma faixa: dentro dela, não há erro. */
+  dueRange?: { low: Cents; high: Cents };
   received?: Cents;
   /** Quanto falta para a pessoa (negativo = recebeu a mais). Desconto a mais também é falta. */
   shortfall: Cents;
@@ -84,26 +86,42 @@ export function applicableItems(result: CalculationResult | null): ItemDefinitio
   return CHECKED_ITEMS.filter((item) => !item.onlyWhenDue || (result !== null && dueAmount(result, item.key) > 0));
 }
 
-export function compareTermination(due: CalculationResult, received: ReceivedAmounts): TerminationCheck {
+/**
+ * Compara o recebido com o devido. `alternative` é o cálculo pela outra leitura da lei, quando há duas (acordo
+ * do art. 484-A): cada verba passa a ter uma faixa, e a diferença conta a partir da ponta mais próxima dela.
+ */
+export function compareTermination(due: CalculationResult, received: ReceivedAmounts, alternative?: CalculationResult): TerminationCheck {
   const rows: CheckRow[] = applicableItems(due).map((item) => {
     const dueValue = dueAmount(due, item.key, received);
+    const alternativeValue = alternative ? dueAmount(alternative, item.key, received) : dueValue;
+    const low = Math.min(dueValue, alternativeValue);
+    const high = Math.max(dueValue, alternativeValue);
+    const dueRange = low !== high ? { low, high } : undefined;
     const receivedValue = received[item.key];
     if (receivedValue === undefined) {
-      return { key: item.key, label: item.label, due: dueValue, shortfall: 0, status: 'not_informed', legalBasis: item.legalBasis };
+      return { key: item.key, label: item.label, due: dueValue, dueRange, shortfall: 0, status: 'not_informed', legalBasis: item.legalBasis };
     }
-    const shortfall = item.kind === 'earning' ? subtract(dueValue, receivedValue) : subtract(receivedValue, dueValue);
+    const below = Math.max(0, subtract(low, receivedValue));
+    const above = Math.max(0, subtract(receivedValue, high));
+    const shortfall = item.kind === 'earning' ? subtract(below, above) : subtract(above, below);
     const status: CheckStatus =
       Math.abs(shortfall) <= ROUNDING_TOLERANCE ? 'ok' : shortfall > 0 ? 'short' : 'over';
-    return { key: item.key, label: item.label, due: dueValue, received: receivedValue, shortfall, status, legalBasis: item.legalBasis };
+    return { key: item.key, label: item.label, due: dueValue, dueRange, received: receivedValue, shortfall, status, legalBasis: item.legalBasis };
   });
 
   const informed = rows.filter((row) => row.status !== 'not_informed');
   const relevant = (row: CheckRow) => (row.status === 'ok' ? 0 : row.shortfall);
   // O total líquido já resume as verbas do TRCT: se foi informado, vale ele; senão, soma verba a verba.
   const netRow = informed.find((row) => row.key === 'net');
-  const trctShortfall = netRow
-    ? relevant(netRow)
-    : informed.filter((row) => row.key !== 'fgtsFine').reduce((sum, row) => add(sum, relevant(row)), 0);
+  const itemsShortfall = informed
+    .filter((row) => row.key !== 'net' && row.key !== 'fgtsFine')
+    .reduce((sum, row) => add(sum, relevant(row)), 0);
+  // Com faixa, o líquido dentro dela pode esconder uma verba abaixo da faixa, compensada por outra no topo.
+  const trctShortfall = !netRow
+    ? itemsShortfall
+    : netRow.dueRange && itemsShortfall > 0
+      ? Math.max(relevant(netRow), itemsShortfall)
+      : relevant(netRow);
   const fineRow = informed.find((row) => row.key === 'fgtsFine');
 
   return { rows, totalShortfall: add(trctShortfall, fineRow ? relevant(fineRow) : 0), informedCount: informed.length };

@@ -22,12 +22,12 @@ describe('parseTrctItems — layout de sistema de folha (rótulos quebrados, val
 
     expect(reading.received).toEqual({
       balance: toCents(2000),
-      thirteenth: toCents(2750), // 63 proporcional + 64 de exercício anterior (0) + 70 do aviso (0)
-      vacation: toCents(4666.66), // 65 proporcionais + 66 vencidas + 68 terço + 71 do aviso
+      thirteenth: toCents(2500), // 63 proporcional + 64 de exercício anterior (0) + 70 do aviso (0)
+      vacation: toCents(4333.33), // 65 proporcionais + 66 vencidas + 68 terço + 71 do aviso
       notice: toCents(1650),
-      inss: toCents(378.88), // 112.1 do saldo + 112.2 do 13º
+      inss: toCents(356.38), // 112.1 do saldo + 112.2 do 13º
       irrf: 0,
-      net: toCents(10337.78),
+      net: toCents(9776.95),
       otherEarnings: toCents(150), // reembolso de VT e rubricas zeradas
       otherDeductions: toCents(500), // empréstimo consignado; o "aviso prévio" das deduções é desconto, não verba
     });

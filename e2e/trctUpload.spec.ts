@@ -46,11 +46,11 @@ test.describe('Anexar o TRCT em PDF', () => {
     await expect(page.getByTestId('check-headline')).toHaveText('R$ 0,00');
     // O valor em reais usa espaço não separável depois do "R$".
     await expect(calculator.result.getByText(/já considera R\$\s150,00 de outros proventos e R\$\s500,00 de outros descontos/)).toBeVisible();
-    await expect(calculator.result.getByText(/Acordo \(art\. 484-A\): diferenças no 13º e nas férias/)).toBeVisible();
+    await expect(calculator.result.getByText(/Acordo \(art\. 484-A\): a lei não diz/)).toBeVisible();
   });
 
   test('TRCT com férias a menos: a conferência aponta a diferença', async ({ page, calculator }) => {
-    // Pagou 7/12 de férias proporcionais em vez de 10/12: 750 + 250 de terço = 1.000
+    // Pagou 6/12 de férias proporcionais em vez de 9/12: 750 + 250 de terço = 1.000
     await calculator.open('conferir-rescisao');
     await upload(page, fixture('payroll-agreement-short-vacation.pdf'));
 
