@@ -1,6 +1,6 @@
 import type { RuleSet } from '@/rules/schema';
 import { add, clampToZero, divide, multiply, subtract, type Cents } from '@/lib/money';
-import { addDays, countAvos, formatBrDate, fullYearsBetween } from '@/lib/dates';
+import { addDays, countAvos, countVacationAvos, formatBrDate, fullYearsBetween } from '@/lib/dates';
 import { calculateInss } from './inss';
 import { calculateIrrf } from './irrf';
 import { calculateNotice, type NoticeReason } from './notice';
@@ -199,7 +199,7 @@ export function calculateTermination(input: TerminationInput, rules: RuleSet): C
       input.admissionDate.getUTCDate()
     )
   );
-  const newPeriodAvos = countAvos(currentPeriodStart, projectedDate, rules.vacation.minDaysForMonth);
+  const newPeriodAvos = countVacationAvos(currentPeriodStart, projectedDate, rules.vacation.minDaysForMonth);
   // O aviso indenizado conta como tempo de serviço: se ele passa do aniversário, completa o período que estava em curso.
   const periodCompletedByNotice =
     fullYearsBetween(input.admissionDate, projectedDate) > fullYearsBetween(input.admissionDate, input.terminationDate);

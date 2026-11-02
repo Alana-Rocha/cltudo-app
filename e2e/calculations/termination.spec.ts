@@ -34,6 +34,18 @@ test.describe('Rescisão', () => {
     await calculator.expectLineItem('1/3 sobre férias proporcionais', 'R$ 1.000,00');
   });
 
+  test('férias contam os meses desde o início do período aquisitivo, não o calendário', async ({ calculator }) => {
+    // 20/03/2025 a 02/09/2026: 1 ano completo → aviso de 33 dias, projeta até 05/10/2026.
+    // Desde 20/03/2026: 6 meses + 16 dias = 7/12 (pelo calendário dariam 6/12)
+    await calculator.open('calculadora-rescisao');
+    await calculator.fill('Data de admissão', '20/03/2025');
+    await calculator.fill('Data de desligamento', '02/09/2026');
+    await calculator.fill('Salário bruto', '3.000,00');
+
+    await calculator.expectLineItem('Férias proporcionais', '7/12 avos');
+    await calculator.expectLineItem('Férias proporcionais', 'R$ 1.750,00');
+  });
+
   test('aviso que entra no ano seguinte soma o 13º dos dois anos', async ({ calculator }) => {
     // 10/12/2026 + 36 dias = 15/01/2027: 12/12 de 2026 + 1/12 de 2027 = 3.250
     await calculator.open('calculadora-rescisao');

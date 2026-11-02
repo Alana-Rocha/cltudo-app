@@ -118,7 +118,7 @@ describe('compareTermination — acordo (art. 484-A), com faixa entre as duas le
 
   it('líquido dentro da faixa não esconde uma verba abaixo dela', () => {
     const { low, high } = row({}, 'net').dueRange!;
-    const check = compareTermination(half, { net: Math.round((low + high) / 2), vacation: row({}, 'vacation').dueRange!.low - toCents(300) }, full);
+    const check = compareTermination(half, { net: Math.round((low + high) / 2), vacation: row({}, 'vacation').due - toCents(300) }, full);
     expect(check.rows.find((r) => r.key === 'net')!.status).toBe('ok');
     expect(check.totalShortfall).toBe(toCents(300));
   });

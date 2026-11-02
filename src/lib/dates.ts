@@ -46,6 +46,26 @@ export function countAvos(start: Date, end: Date, minDaysForMonth: number): numb
   return Math.min(avos, 12);
 }
 
+/**
+ * Avos de férias de um período aquisitivo (CLT art. 146, parágrafo único): os meses contam a partir do início
+ * do período, não pelo calendário, e a fração final vale um avo com pelo menos `minDaysForMonth` dias.
+ */
+export function countVacationAvos(start: Date, end: Date, minDaysForMonth: number): number {
+  if (end.getTime() < start.getTime()) return 0;
+
+  const dayAfterEnd = addDays(end, 1).getTime();
+  const monthsAfterStart = (months: number) => {
+    const lastDay = daysInMonth(start.getUTCFullYear(), start.getUTCMonth() + months);
+    return new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth() + months, Math.min(start.getUTCDate(), lastDay)));
+  };
+
+  let months = 0;
+  while (monthsAfterStart(months + 1).getTime() <= dayAfterEnd) months += 1;
+
+  const remainingDays = Math.round((dayAfterEnd - monthsAfterStart(months).getTime()) / (1000 * 60 * 60 * 24));
+  return Math.min(months + (remainingDays >= minDaysForMonth ? 1 : 0), 12);
+}
+
 /** Number of Sundays in a given month (0-indexed month, i.e. Jan = 0). */
 export function countSundaysInMonth(year: number, month: number): number {
   let count = 0;

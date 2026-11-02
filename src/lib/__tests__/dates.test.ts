@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { countAvos, fullYearsBetween, addDays, maskBrDateInput } from '../dates';
+import { countAvos, countVacationAvos, fullYearsBetween, addDays, maskBrDateInput } from '../dates';
 
 describe('maskBrDateInput — máscara automática dd/mm/aaaa', () => {
   it('insere as barras conforme o usuário digita números', () => {
@@ -42,6 +42,27 @@ describe('countAvos — regra dos 15 dias', () => {
     const start = new Date(Date.UTC(2020, 0, 1));
     const end = new Date(Date.UTC(2026, 11, 31));
     expect(countAvos(start, end, 15)).toBe(12);
+  });
+});
+
+describe('countVacationAvos — meses a partir do início do período', () => {
+  const utc = (year: number, month: number, day: number) => new Date(Date.UTC(year, month - 1, day));
+
+  it.each([
+    ['mês exato não ganha avo extra', utc(2025, 12, 20), utc(2026, 11, 19), 11],
+    ['fração de 11 dias não conta', utc(2025, 11, 10), utc(2026, 10, 20), 11],
+    ['fração de 26 dias conta', utc(2025, 11, 10), utc(2026, 11, 4), 12],
+    ['14 dias não contam', utc(2026, 3, 20), utc(2026, 4, 2), 0],
+    ['15 dias contam', utc(2026, 3, 20), utc(2026, 4, 3), 1],
+    ['contrato que começa no meio do mês: 6 meses + 16 dias', utc(2026, 3, 20), utc(2026, 10, 5), 7],
+    ['mês mais curto: de 31/01 até 27/02 é um mês', utc(2026, 1, 31), utc(2026, 2, 27), 1],
+    ['nunca ultrapassa 12 avos', utc(2025, 1, 1), utc(2026, 6, 30), 12],
+  ])('%s', (_, start, end, avos) => {
+    expect(countVacationAvos(start, end, 15)).toBe(avos);
+  });
+
+  it('término antes do início não tem avos', () => {
+    expect(countVacationAvos(utc(2026, 3, 20), utc(2026, 3, 1), 15)).toBe(0);
   });
 });
 

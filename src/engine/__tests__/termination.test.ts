@@ -92,7 +92,7 @@ describe('calculateTermination — matriz de verbas', () => {
       const result = calculateTermination(full, ruleSet2026_01);
       expect(projectedContractEnd(full, ruleSet2026_01)).toEqual(new Date(Date.UTC(2026, 10, 22)));
       expect(amount(result, 'thirteenth')).toBe(toCents(2750)); // 11/12
-      expect(amount(result, 'vacation')).toBe(toCents(2500)); // 10/12
+      expect(amount(result, 'vacation')).toBe(toCents(2250)); // 9 meses + 13 dias: a fração não chega a um avo
     });
 
     it('as duas leituras pagam o mesmo aviso, pela metade', () => {
@@ -128,6 +128,12 @@ describe('calculateTermination — matriz de verbas', () => {
       // 01/11/2025 a 20/10/2026 + 30 dias = 19/11/2026: 19 dias no período novo dão 1 avo
       const input = dismissal(utc(2025, 11, 1), utc(2026, 10, 20));
       expect(item(input, 'vacation').amount).toBe(toCents(3250));
+    });
+
+    it('férias contam meses desde o início do período, não meses do calendário', () => {
+      // 20/03/2025 a 02/09/2026 + 33 dias = 05/10/2026: desde 20/03/2026 são 6 meses + 16 dias (no calendário, 6)
+      const input = dismissal(utc(2025, 3, 20), utc(2026, 9, 2));
+      expect(item(input, 'vacation').explanation).toBe('7/12 avos');
     });
 
     it('sem passar do aniversário, conta só o período em curso', () => {
