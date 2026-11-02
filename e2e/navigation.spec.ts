@@ -50,6 +50,25 @@ test.describe('Navegação entre páginas', () => {
     await expect(nav.getByRole('link', { name: 'Férias' })).toHaveAttribute('aria-current', 'page');
   });
 
+  test('destaque do menu acompanha o mouse e volta para a página atual', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'o menu do topo fica escondido no celular');
+    await page.goto('/calculadora-rescisao');
+    const nav = page.getByRole('navigation', { name: 'Principais calculadoras' });
+    const pill = nav.locator('span[aria-hidden]');
+    const expectPillOver = (name: string) =>
+      expect(async () => {
+        const [pillBox, linkBox] = await Promise.all([pill.boundingBox(), nav.getByRole('link', { name }).boundingBox()]);
+        expect(Math.round(pillBox!.x)).toBe(Math.round(linkBox!.x));
+        expect(Math.round(pillBox!.width)).toBe(Math.round(linkBox!.width));
+      }).toPass();
+
+    await expectPillOver('Rescisão');
+    await nav.getByRole('link', { name: 'CLT x PJ' }).hover();
+    await expectPillOver('CLT x PJ');
+    await page.mouse.move(0, 500);
+    await expectPillOver('Rescisão');
+  });
+
   test('breadcrumb leva de volta ao início', async ({ page }) => {
     await page.goto('/calculadora-irrf');
     const breadcrumb = page.getByRole('navigation', { name: 'Você está em' });
