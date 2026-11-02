@@ -22,6 +22,52 @@ test.describe('Rescisão', () => {
     await calculator.expectLineItem('INSS sobre o 13º', 'R$ 133,19');
   });
 
+  test('aviso que passa do aniversário de admissão completa o período de férias', async ({ calculator }) => {
+    // 10/11/2025 a 20/10/2026 + 30 dias = 19/11/2026: 12/12 avos, com 10 dias no período novo
+    await calculator.open('calculadora-rescisao');
+    await calculator.fill('Data de admissão', '10/11/2025');
+    await calculator.fill('Data de desligamento', '20/10/2026');
+    await calculator.fill('Salário bruto', '3.000,00');
+
+    await calculator.expectLineItem('Férias proporcionais', 'R$ 3.000,00');
+    await calculator.expectLineItem('Férias proporcionais', '12/12 avos do período completado pelo aviso');
+    await calculator.expectLineItem('1/3 sobre férias proporcionais', 'R$ 1.000,00');
+  });
+
+  test('aviso que entra no ano seguinte soma o 13º dos dois anos', async ({ calculator }) => {
+    // 10/12/2026 + 36 dias = 15/01/2027: 12/12 de 2026 + 1/12 de 2027 = 3.250
+    await calculator.open('calculadora-rescisao');
+    await calculator.fill('Data de admissão', '01/03/2024');
+    await calculator.fill('Data de desligamento', '10/12/2026');
+    await calculator.fill('Salário bruto', '3.000,00');
+
+    await calculator.expectLineItem('13º proporcional', '12/12 avos de 2026 + 1/12 avos de 2027');
+    await calculator.expectLineItem('13º proporcional', 'R$ 3.250,00');
+    await expect(calculator.result.getByText(/Se a empresa já pagou a 1ª parcela/)).toBeVisible();
+  });
+
+  test('saída depois de 20/12 considera o 13º do ano já pago e avisa', async ({ calculator }) => {
+    // 25/12/2026 + 36 dias = 30/01/2027: sobra 1/12 de 2027
+    await calculator.open('calculadora-rescisao');
+    await calculator.fill('Data de admissão', '01/03/2024');
+    await calculator.fill('Data de desligamento', '25/12/2026');
+    await calculator.fill('Salário bruto', '3.000,00');
+
+    await calculator.expectLineItem('13º proporcional', 'R$ 250,00');
+    await expect(calculator.result.getByText(/a empresa ainda deve 12\/12 avos/)).toBeVisible();
+  });
+
+  test('admissão no ano da saída: o 13º conta só a partir dela', async ({ calculator }) => {
+    // 01/06/2026 a 15/08/2026 + 30 dias = 14/09/2026: jun, jul e ago
+    await calculator.open('calculadora-rescisao');
+    await calculator.fill('Data de admissão', '01/06/2026');
+    await calculator.fill('Data de desligamento', '15/08/2026');
+    await calculator.fill('Salário bruto', '3.000,00');
+
+    await calculator.expectLineItem('13º proporcional', '3/12 avos');
+    await calculator.expectLineItem('13º proporcional', 'R$ 750,00');
+  });
+
   test('desligamento em 2025 usa as tabelas de 2025, não as de hoje', async ({ calculator }) => {
     // Regras pela data do desligamento (14/03/2025): salário mínimo R$ 1.518 e faixas do INSS de 2025.
     // Saldo: 6.000 × 14 ÷ 30 = 2.800 → INSS 113,85 + 1.275,88 × 9% + 6,12 × 12% = 229,4136

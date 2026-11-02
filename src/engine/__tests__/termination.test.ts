@@ -103,6 +103,64 @@ describe('calculateTermination — matriz de verbas', () => {
     });
   });
 
+  describe('projeção do aviso e marcos do contrato', () => {
+    const utc = (year: number, month: number, day: number) => new Date(Date.UTC(year, month - 1, day));
+    const dismissal = (admissionDate: Date, terminationDate: Date): TerminationInput => ({
+      admissionDate,
+      terminationDate,
+      grossSalary: toCents(3000),
+      terminationType: 'without_cause',
+      noticeMode: 'indemnified',
+      dependents: 0,
+      daysWorkedInLastMonth: 20,
+    });
+    const item = (input: TerminationInput, key: string) =>
+      calculateTermination(input, ruleSet2026_01).items.find((i) => i.key === key)!;
+
+    it('aviso que passa do aniversário completa o período de férias: 12/12 avos', () => {
+      // 10/11/2025 a 20/10/2026 + 30 dias = 19/11/2026; no período novo, só 10 dias
+      const input = dismissal(utc(2025, 11, 10), utc(2026, 10, 20));
+      expect(item(input, 'vacation')).toMatchObject({ amount: toCents(3000), explanation: '12/12 avos do período completado pelo aviso + 0/12 avos do novo' });
+      expect(item(input, 'vacation-bonus').amount).toBe(toCents(1000));
+    });
+
+    it('e soma os avos que o aviso já alcança no período novo', () => {
+      // 01/11/2025 a 20/10/2026 + 30 dias = 19/11/2026: 19 dias no período novo dão 1 avo
+      const input = dismissal(utc(2025, 11, 1), utc(2026, 10, 20));
+      expect(item(input, 'vacation').amount).toBe(toCents(3250));
+    });
+
+    it('sem passar do aniversário, conta só o período em curso', () => {
+      const input = dismissal(utc(2025, 12, 20), utc(2026, 10, 20));
+      expect(item(input, 'vacation')).toMatchObject({ amount: toCents(2750), explanation: '11/12 avos' });
+    });
+
+    it('aviso que entra no ano seguinte soma o 13º dos dois anos', () => {
+      // 10/12/2026 + 36 dias = 15/01/2027
+      const input = dismissal(utc(2024, 3, 1), utc(2026, 12, 10));
+      expect(item(input, 'thirteenth')).toMatchObject({ amount: toCents(3250), explanation: '12/12 avos de 2026 + 1/12 avos de 2027' });
+    });
+
+    it('entre 30/11 e 20/12, avisa que a 1ª parcela pode já ter sido paga', () => {
+      const result = calculateTermination(dismissal(utc(2024, 3, 1), utc(2026, 12, 10)), ruleSet2026_01);
+      expect(result.warnings.some((w) => w.includes('1ª parcela'))).toBe(true);
+    });
+
+    it('saída depois de 20/12: o 13º do ano já venceu, sobra só o avo projetado', () => {
+      // 25/12/2026 + 36 dias = 30/01/2027
+      const input = dismissal(utc(2024, 3, 1), utc(2026, 12, 25));
+      const result = calculateTermination(input, ruleSet2026_01);
+      expect(item(input, 'thirteenth')).toMatchObject({ amount: toCents(250), explanation: '1/12 avos' });
+      expect(result.warnings.some((w) => w.includes('ainda deve 12/12 avos'))).toBe(true);
+    });
+
+    it('admissão no ano da saída: o 13º conta só a partir dela', () => {
+      // 01/06/2026 a 15/08/2026 + 30 dias = 14/09/2026: jun, jul e ago
+      const input = dismissal(utc(2026, 6, 1), utc(2026, 8, 15));
+      expect(item(input, 'thirteenth')).toMatchObject({ amount: toCents(750), explanation: '3/12 avos' });
+    });
+  });
+
   it('pedido de demissão sem cumprir aviso: desconto de até 30 dias', () => {
     const result = calculateTermination(
       {

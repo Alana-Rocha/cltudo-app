@@ -83,6 +83,42 @@ export function projectedContractEnd(
   return addDays(input.terminationDate, Math.ceil(notice.days / 2));
 }
 
+type ThirteenthAvos = {
+  total: number;
+  explanation: string;
+  /** Saída depois de 20/12: o 13º do ano já venceu (Lei 4.749/1965, art. 1º) e não entra na conta. */
+  alreadyDueAvos: number;
+};
+
+/**
+ * Avos de 13º do ano da saída, contados da admissão se ela foi nesse ano, mais os do ano seguinte quando o
+ * aviso indenizado projeta o contrato para lá.
+ */
+function countThirteenthAvos(input: TerminationInput, projectedDate: Date, rules: RuleSet): ThirteenthAvos {
+  const avosIn = (year: number) => {
+    const yearStart = Date.UTC(year, 0, 1);
+    const yearEnd = Date.UTC(year, 11, 31);
+    return countAvos(
+      new Date(Math.max(yearStart, input.admissionDate.getTime())),
+      new Date(Math.min(yearEnd, projectedDate.getTime())),
+      rules.thirteenth.minDaysForMonth
+    );
+  };
+  const year = input.terminationDate.getUTCFullYear();
+  const pastDueDate = input.terminationDate.getTime() > Date.UTC(year, 11, 20);
+  const yearAvos = avosIn(year);
+  const currentAvos = pastDueDate ? 0 : yearAvos;
+  const nextAvos = projectedDate.getUTCFullYear() > year ? avosIn(year + 1) : 0;
+  return {
+    total: currentAvos + nextAvos,
+    explanation:
+      currentAvos > 0 && nextAvos > 0
+        ? `${currentAvos}/12 avos de ${year} + ${nextAvos}/12 avos de ${year + 1}`
+        : `${currentAvos + nextAvos}/12 avos`,
+    alreadyDueAvos: pastDueDate ? yearAvos : 0,
+  };
+}
+
 export function calculateTermination(input: TerminationInput, rules: RuleSet): CalculationResult {
   const included: string[] = [];
   const excluded: string[] = [];
@@ -133,13 +169,22 @@ export function calculateTermination(input: TerminationInput, rules: RuleSet): C
   }
 
   // 3) 13º proporcional (sobre o ano de saída, usando a data projetada).
-  const yearStart = new Date(Date.UTC(projectedDate.getUTCFullYear(), 0, 1));
-  const thirteenthAvos = countAvos(yearStart, projectedDate, rules.thirteenth.minDaysForMonth);
+  const thirteenthAvos = countThirteenthAvos(input, projectedDate, rules);
   const thirteenthAmount = THIRTEENTH_DUE[input.terminationType]
-    ? divide(multiply(remunerationBase, thirteenthAvos), 12)
+    ? divide(multiply(remunerationBase, thirteenthAvos.total), 12)
     : 0;
   if (THIRTEENTH_DUE[input.terminationType]) {
-    included.push(`13º proporcional: ${thirteenthAvos}/12 avos.`);
+    included.push(`13º proporcional: ${thirteenthAvos.explanation}.`);
+    const terminationYear = input.terminationDate.getUTCFullYear();
+    if (thirteenthAvos.alreadyDueAvos > 0) {
+      warnings.push(
+        `Saída depois de 20/12: a conta considera que o 13º de ${terminationYear} já foi pago, pois o prazo legal é 20/12. Se não foi, a empresa ainda deve ${thirteenthAvos.alreadyDueAvos}/12 avos além deste resultado.`
+      );
+    } else if (input.terminationDate.getTime() >= Date.UTC(terminationYear, 10, 30)) {
+      warnings.push(
+        'O 13º aparece com o valor bruto. Se a empresa já pagou a 1ª parcela, que vence em 30/11, ela é descontada no TRCT.'
+      );
+    }
   } else {
     excluded.push('13º proporcional: não devido em dispensa por justa causa.');
   }
@@ -154,7 +199,14 @@ export function calculateTermination(input: TerminationInput, rules: RuleSet): C
       input.admissionDate.getUTCDate()
     )
   );
-  const vacationProportionalAvos = countAvos(currentPeriodStart, projectedDate, rules.vacation.minDaysForMonth);
+  const newPeriodAvos = countAvos(currentPeriodStart, projectedDate, rules.vacation.minDaysForMonth);
+  // O aviso indenizado conta como tempo de serviço: se ele passa do aniversário, completa o período que estava em curso.
+  const periodCompletedByNotice =
+    fullYearsBetween(input.admissionDate, projectedDate) > fullYearsBetween(input.admissionDate, input.terminationDate);
+  const vacationProportionalAvos = newPeriodAvos + (periodCompletedByNotice ? 12 : 0);
+  const vacationExplanation = periodCompletedByNotice
+    ? `12/12 avos do período completado pelo aviso + ${newPeriodAvos}/12 avos do novo`
+    : `${newPeriodAvos}/12 avos`;
   const vacationBase = divide(multiply(remunerationBase, vacationProportionalAvos), 12);
   const vacationBonus = multiply(vacationBase, rules.vacation.bonusFraction);
   const vacationTotal = add(vacationBase, vacationBonus);
@@ -231,8 +283,8 @@ export function calculateTermination(input: TerminationInput, rules: RuleSet): C
       ...(noticeAmount !== 0
         ? [{ key: 'notice', label: noticeAmount > 0 ? 'Aviso prévio indenizado' : 'Desconto de aviso prévio não cumprido', amount: noticeAmount, type: (noticeAmount > 0 ? ('earning' as const) : ('deduction' as const)), explanation: `${notice.days} dias` }]
         : []),
-      { key: 'thirteenth', label: '13º proporcional', amount: thirteenthAmount, type: 'earning', explanation: `${thirteenthAvos}/12 avos` },
-      { key: 'vacation', label: 'Férias proporcionais', amount: vacationBase, type: 'earning', explanation: `${vacationProportionalAvos}/12 avos` },
+      { key: 'thirteenth', label: '13º proporcional', amount: thirteenthAmount, type: 'earning', explanation: thirteenthAvos.explanation },
+      { key: 'vacation', label: 'Férias proporcionais', amount: vacationBase, type: 'earning', explanation: vacationExplanation },
       { key: 'vacation-bonus', label: '1/3 sobre férias proporcionais', amount: vacationBonus, type: 'earning', explanation: '1/3 constitucional' },
       ...(expiredVacationTotal > 0
         ? [{ key: 'vacation-expired', label: `Férias vencidas (${expiredVacationDays} dias)${input.expiredVacationDoubled ? ', em dobro' : ''}`, amount: expiredVacationTotal, type: 'earning' as const, explanation: `${formatDecimal(remunerationBase / 100, 2)} ÷ 30 × ${expiredVacationDays} + 1/3${input.expiredVacationDoubled ? ', × 2' : ''}`, legalBasis: 'CLT art. 137' }]
