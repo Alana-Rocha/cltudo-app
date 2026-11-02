@@ -21,7 +21,7 @@ export type CheckRow = {
   key: CheckedItem;
   label: string;
   due: Cents;
-  /** Quando há duas leituras válidas da lei, o valor devido é uma faixa: dentro dela, não há erro. */
+  /** Quando há mais de uma leitura possível, o valor devido é uma faixa: dentro dela, não há erro. */
   dueRange?: { low: Cents; high: Cents };
   received?: Cents;
   /** Quanto falta para a pessoa (negativo = recebeu a mais). Desconto a mais também é falta. */
@@ -87,15 +87,15 @@ export function applicableItems(result: CalculationResult | null): ItemDefinitio
 }
 
 /**
- * Compara o recebido com o devido. `alternative` é o cálculo pela outra leitura da lei, quando há duas (acordo
- * do art. 484-A): cada verba passa a ter uma faixa, e a diferença conta a partir da ponta mais próxima dela.
+ * Compara o recebido com o devido. `alternatives` são os cálculos pelas outras leituras possíveis (ver
+ * `alternativeReadings`): cada verba passa a ter uma faixa, e a diferença conta a partir da ponta mais próxima dela.
  */
-export function compareTermination(due: CalculationResult, received: ReceivedAmounts, alternative?: CalculationResult): TerminationCheck {
+export function compareTermination(due: CalculationResult, received: ReceivedAmounts, alternatives: CalculationResult[] = []): TerminationCheck {
   const rows: CheckRow[] = applicableItems(due).map((item) => {
     const dueValue = dueAmount(due, item.key, received);
-    const alternativeValue = alternative ? dueAmount(alternative, item.key, received) : dueValue;
-    const low = Math.min(dueValue, alternativeValue);
-    const high = Math.max(dueValue, alternativeValue);
+    const values = [dueValue, ...alternatives.map((alternative) => dueAmount(alternative, item.key, received))];
+    const low = Math.min(...values);
+    const high = Math.max(...values);
     const dueRange = low !== high ? { low, high } : undefined;
     const receivedValue = received[item.key];
     if (receivedValue === undefined) {

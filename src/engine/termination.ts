@@ -6,7 +6,7 @@ import { calculateIrrf } from './irrf';
 import { calculateNotice, type NoticeReason } from './notice';
 import { calculateFgtsFine, type TerminationType } from './fgts';
 import type { CalculationResult } from './types';
-import { formatDecimal, formatPercent } from '@/lib/format';
+import { formatCurrency, formatDecimal, formatPercent } from '@/lib/format';
 
 export type NoticeMode = 'worked' | 'indemnified' | 'waived_by_employer' | 'not_fulfilled_by_employee';
 
@@ -18,7 +18,8 @@ export type TerminationInput = {
   noticeMode: NoticeMode;
   dependents: number;
   daysWorkedInLastMonth: number; // for saldo de salário
-  actualFgtsBalance?: Cents;
+  actualFgtsBalance?: Cents; // por padrão, sem os depósitos desta rescisão
+  fgtsBalanceIncludesTerminationDeposits?: boolean; // o extrato já mostra os depósitos desta rescisão
   averageVariables?: Cents;
   expiredVacationDays?: number; // 0..30, dias não gozados de período(s) aquisitivo(s) já vencido(s)
   expiredVacationDoubled?: boolean; // período concessivo (12 meses) já expirado — CLT art. 137 / Súmula 450 TST
@@ -45,6 +46,15 @@ const NOTICE_DUE: Record<TerminationType, boolean | 'proportional' | 0.5> = {
 };
 
 const THIRTEENTH_DUE: Record<TerminationType, boolean> = {
+  without_cause: true,
+  employee_resignation: true,
+  just_cause: false,
+  agreement: true,
+  contract_end: true,
+};
+
+/** Súmula 171 do TST: férias proporcionais são devidas em toda extinção do contrato, salvo por justa causa. */
+const PROPORTIONAL_VACATION_DUE: Record<TerminationType, boolean> = {
   without_cause: true,
   employee_resignation: true,
   just_cause: false,
@@ -81,6 +91,23 @@ export function projectedContractEnd(
   if (NOTICE_DUE[input.terminationType] !== 0.5 || input.agreementProjection === 'full') return notice.projectedEndDate;
   // Aviso de número ímpar de dias: o dia que sobra da metade conta inteiro.
   return addDays(input.terminationDate, Math.ceil(notice.days / 2));
+}
+
+/**
+ * Cálculos pelas outras leituras possíveis dos dados, para a conferência aceitar uma faixa: no acordo, a projeção
+ * do aviso; com saldo do FGTS informado, se ele já tem os depósitos da rescisão.
+ */
+export function alternativeReadings(input: TerminationInput, rules: RuleSet): CalculationResult[] {
+  const projections: Partial<TerminationInput>[] =
+    input.terminationType === 'agreement' && input.noticeMode === 'indemnified'
+      ? [{}, { agreementProjection: 'full' }]
+      : [{}];
+  const balances: Partial<TerminationInput>[] =
+    input.actualFgtsBalance !== undefined ? [{}, { fgtsBalanceIncludesTerminationDeposits: true }] : [{}];
+  return projections
+    .flatMap((projection) => balances.map((balance) => ({ ...projection, ...balance })))
+    .filter((reading) => Object.keys(reading).length > 0)
+    .map((reading) => calculateTermination({ ...input, ...reading }, rules));
 }
 
 type ThirteenthAvos = {
@@ -189,7 +216,7 @@ export function calculateTermination(input: TerminationInput, rules: RuleSet): C
     excluded.push('13º proporcional: não devido em dispensa por justa causa.');
   }
 
-  // 4) Férias vencidas + proporcionais + 1/3 — always due (even on just cause).
+  // 4) Férias proporcionais + 1/3, salvo na justa causa; as vencidas são devidas sempre (item 4b).
   // Período aquisitivo em curso: começa no último aniversário da admissão (CLT art. 146, parágrafo único).
   // Períodos anteriores não gozados são férias vencidas, informadas à parte.
   const currentPeriodStart = new Date(
@@ -204,13 +231,22 @@ export function calculateTermination(input: TerminationInput, rules: RuleSet): C
   const periodCompletedByNotice =
     fullYearsBetween(input.admissionDate, projectedDate) > fullYearsBetween(input.admissionDate, input.terminationDate);
   const vacationProportionalAvos = newPeriodAvos + (periodCompletedByNotice ? 12 : 0);
-  const vacationExplanation = periodCompletedByNotice
-    ? `12/12 avos do período completado pelo aviso + ${newPeriodAvos}/12 avos do novo`
-    : `${newPeriodAvos}/12 avos`;
-  const vacationBase = divide(multiply(remunerationBase, vacationProportionalAvos), 12);
+  const vacationDue = PROPORTIONAL_VACATION_DUE[input.terminationType];
+  const vacationExplanation = !vacationDue
+    ? 'Não devidas na justa causa (Súmula 171 do TST)'
+    : periodCompletedByNotice
+      ? `12/12 avos do período completado pelo aviso + ${newPeriodAvos}/12 avos do novo`
+      : `${newPeriodAvos}/12 avos`;
+  const vacationBase = vacationDue ? divide(multiply(remunerationBase, vacationProportionalAvos), 12) : 0;
   const vacationBonus = multiply(vacationBase, rules.vacation.bonusFraction);
   const vacationTotal = add(vacationBase, vacationBonus);
-  included.push('Férias proporcionais + 1/3: devidas em todo tipo de desligamento, inclusive justa causa.');
+  if (vacationDue) {
+    included.push('Férias proporcionais + 1/3: devidas neste tipo de desligamento.');
+  } else {
+    excluded.push(
+      'Férias proporcionais: não devidas em dispensa por justa causa (Súmula 171 do TST). Convenção coletiva ou decisão judicial podem mudar isso.'
+    );
+  }
 
   // 4b) Férias vencidas — dias não gozados de período(s) aquisitivo(s) já completos.
   const expiredVacationDays = Math.min(30, Math.max(0, input.expiredVacationDays ?? 0));
@@ -245,6 +281,7 @@ export function calculateTermination(input: TerminationInput, rules: RuleSet): C
     {
       terminationType: input.terminationType,
       actualBalance: input.actualFgtsBalance,
+      addTerminationDeposits: !input.fgtsBalanceIncludesTerminationDeposits,
       grossSalary: remunerationBase,
       monthsEmployed: Math.max(
         1,
@@ -260,6 +297,13 @@ export function calculateTermination(input: TerminationInput, rules: RuleSet): C
     rules
   );
   warnings.push(...fgts.warnings);
+  if (input.actualFgtsBalance !== undefined && fgts.fineRate > 0) {
+    warnings.push(
+      input.fgtsBalanceIncludesTerminationDeposits
+        ? 'Esta conta considera que o saldo informado já tem os depósitos desta rescisão.'
+        : `A multa considera o saldo informado mais ${formatCurrency(fgts.depositsOnTermination)} de depósitos desta rescisão. Se o saldo informado já tem esses depósitos, a multa é ${formatCurrency(multiply(input.actualFgtsBalance, fgts.fineRate))}.`
+    );
+  }
 
   const withdrawalRate = FGTS_WITHDRAWAL_RATE[input.terminationType];
   if (withdrawalRate > 0) {
@@ -294,7 +338,7 @@ export function calculateTermination(input: TerminationInput, rules: RuleSet): C
       { key: 'inss-13', label: 'INSS sobre o 13º', amount: inssOnThirteenth.total, type: 'deduction', explanation: 'Sobre o 13º proporcional, separado do saldo' },
       { key: 'irrf-13', label: 'IRRF sobre o 13º', amount: irrfOnThirteenth.total, type: 'deduction', explanation: 'Sobre o 13º proporcional, separado do saldo' },
       ...(fgts.fine > 0
-        ? [{ key: 'fgts-fine', label: `Multa do FGTS (${formatPercent(fgts.fineRate, 0)})`, amount: fgts.fine, type: 'earning' as const, explanation: fgts.usedEstimate ? 'Sobre saldo estimado do FGTS' : 'Sobre saldo informado do FGTS' }]
+        ? [{ key: 'fgts-fine', label: `Multa do FGTS (${formatPercent(fgts.fineRate, 0)})`, amount: fgts.fine, type: 'earning' as const, explanation: fgts.usedEstimate ? 'Sobre saldo estimado do FGTS' : input.fgtsBalanceIncludesTerminationDeposits ? 'Sobre saldo informado do FGTS' : 'Sobre saldo informado do FGTS + depósitos da rescisão' }]
         : []),
     ],
     totals: { gross: grossTotal, deductions, net },

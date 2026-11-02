@@ -165,7 +165,7 @@ export function useTerminationForm(storagePrefix: string) {
             hint="Dias do último mês já trabalhados e ainda não pagos (saldo de salário) — sugerido a partir das datas acima; ajuste só se houve faltas não remuneradas."
           />
           <NumberInput id="dependents" label="Número de dependentes" value={dependents} onChange={setDependents} min={0} />
-          <CurrencyInput id="fgts" label="Saldo do FGTS (opcional, para um valor exato)" value={fgtsBalance} onChange={setFgtsBalance} />
+          <CurrencyInput id="fgts" label="Saldo do FGTS (opcional, para um valor exato)" hint="O saldo antes dos depósitos da rescisão. Se houve saques, some esses valores: a multa incide sobre todos os depósitos." value={fgtsBalance} onChange={setFgtsBalance} />
 
           <div className="space-y-4 rounded-md border border-dashed p-4">
             <Checkbox

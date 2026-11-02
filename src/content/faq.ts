@@ -75,7 +75,7 @@ const FAQ_BY_SLUG: Record<string, (rules: RuleSet) => FaqItem[]> = {
   'calculadora-rescisao': (r) => [
     {
       question: 'Quais verbas eu recebo em qualquer tipo de desligamento?',
-      answer: 'Saldo de salário e férias proporcionais + 1/3 são devidos mesmo em dispensa por justa causa. As demais verbas dependem do tipo de desligamento.',
+      answer: 'Saldo de salário e férias vencidas + 1/3 são devidos mesmo em dispensa por justa causa. As demais verbas dependem do tipo de desligamento.',
     },
     {
       question: 'O aviso prévio sempre projeta o contrato?',
@@ -83,7 +83,7 @@ const FAQ_BY_SLUG: Record<string, (rules: RuleSet) => FaqItem[]> = {
     },
     {
       question: 'Justa causa dá direito a 13º proporcional?',
-      answer: 'Não. Na dispensa por justa causa, o 13º proporcional não é devido, mas o saldo de salário e as férias proporcionais continuam sendo.',
+      answer: 'Não. Na dispensa por justa causa, o 13º proporcional e as férias proporcionais não são devidos (Súmula 171 do TST), mas o saldo de salário e as férias vencidas continuam sendo.',
     },
     {
       question: 'Como funciona a multa do FGTS no acordo (art. 484-A)?',
@@ -91,7 +91,7 @@ const FAQ_BY_SLUG: Record<string, (rules: RuleSet) => FaqItem[]> = {
     },
     {
       question: 'A multa do FGTS calculada aqui é exata?',
-      answer: 'Só quando você informa o saldo real do FGTS. Sem ele, o valor é uma estimativa que não reproduz reajustes salariais ao longo do contrato.',
+      answer: 'Fica mais exata quando você informa o saldo do FGTS antes dos depósitos da rescisão, porque esses depósitos também entram na base da multa. Se houve saques, some esses valores. Sem o saldo, o valor é uma estimativa que não reproduz reajustes salariais ao longo do contrato.',
     },
   ],
   'conferir-rescisao': () => [

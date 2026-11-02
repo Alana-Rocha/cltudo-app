@@ -98,7 +98,7 @@ test.describe('Rescisão', () => {
     await expect(calculator.result.getByText('Cálculo com regras vigentes a partir de janeiro de 2025.')).toBeVisible();
   });
 
-  test('justa causa: sem aviso prévio, sem 13º e sem multa do FGTS', async ({ calculator }) => {
+  test('justa causa: sem aviso prévio, 13º, férias proporcionais e multa do FGTS', async ({ calculator }) => {
     await calculator.open('calculadora-rescisao');
     await calculator.fill('Data de admissão', '01/03/2024');
     await calculator.fill('Data de desligamento', '15/06/2026');
@@ -109,6 +109,20 @@ test.describe('Rescisão', () => {
     await expect(calculator.lineItem('Aviso prévio indenizado')).toHaveCount(0);
     await expect(calculator.lineItem('Multa do FGTS (40%)')).toHaveCount(0);
     await expect(calculator.result.getByText('13º proporcional: não devido em dispensa por justa causa.')).toBeVisible();
+    await calculator.expectLineItem('Férias proporcionais', 'Súmula 171 do TST');
+    await calculator.expectLineItem('Férias proporcionais', 'R$ 0,00');
+  });
+
+  test('multa do FGTS com saldo informado soma os depósitos da rescisão', async ({ calculator }) => {
+    // Depósitos: 8% de (1.500 + 3.600 + 1.750) = 548; multa: 40% de 10.548 = 4.219,20
+    await calculator.open('calculadora-rescisao');
+    await calculator.fill('Data de admissão', '01/03/2024');
+    await calculator.fill('Data de desligamento', '15/06/2026');
+    await calculator.fill('Salário bruto', '3.000,00');
+    await calculator.fill('Saldo do FGTS (opcional, para um valor exato)', '10.000,00');
+
+    await calculator.expectLineItem('Multa do FGTS (40%)', 'R$ 4.219,20');
+    await expect(calculator.result.getByText(/Se o saldo informado já tem esses depósitos, a multa é R\$\s4\.000,00/)).toBeVisible();
   });
 
   test('férias vencidas em dobro somam principal + 1/3, × 2', async ({ calculator }) => {

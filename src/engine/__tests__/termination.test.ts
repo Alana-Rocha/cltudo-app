@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { calculateTermination, projectedContractEnd, type TerminationInput } from '../termination';
+import { alternativeReadings, calculateTermination, projectedContractEnd, type TerminationInput } from '../termination';
 import type { CalculationResult } from '../types';
 import { ruleSet2026_01 } from '@/rules/2026-01';
 import { toCents } from '@/lib/money';
@@ -25,7 +25,7 @@ describe('calculateTermination — matriz de verbas', () => {
     expect(result.included.some((s) => s.includes('Multa do FGTS: 40%'))).toBe(true);
   });
 
-  it('justa causa: nenhum aviso, nenhum 13º, nenhuma multa de FGTS — só saldo e férias proporcionais', () => {
+  it('justa causa: nenhum aviso, 13º, férias proporcionais ou multa de FGTS — só o saldo de salário', () => {
     const result = calculateTermination(
       {
         admissionDate: admission,
@@ -43,9 +43,61 @@ describe('calculateTermination — matriz de verbas', () => {
     expect(result.excluded.some((s) => s.includes('13º proporcional'))).toBe(true);
     expect(result.excluded.some((s) => s.includes('Multa do FGTS'))).toBe(true);
     expect(result.excluded.some((s) => s.includes('Saque do FGTS'))).toBe(true);
-    // Férias proporcionais still due even on justa causa:
-    const vacation = result.items.find((i) => i.key === 'vacation')!;
-    expect(vacation.amount).toBeGreaterThan(0);
+    // Súmula 171 do TST
+    expect(result.items.find((i) => i.key === 'vacation')!.amount).toBe(0);
+    expect(result.items.find((i) => i.key === 'vacation-bonus')!.amount).toBe(0);
+    expect(result.excluded.some((s) => s.includes('Súmula 171'))).toBe(true);
+  });
+
+  it('justa causa: as férias vencidas continuam devidas', () => {
+    const result = calculateTermination(
+      {
+        admissionDate: admission,
+        terminationDate: new Date(Date.UTC(2025, 11, 20)),
+        grossSalary: toCents(3000),
+        terminationType: 'just_cause',
+        noticeMode: 'waived_by_employer',
+        dependents: 0,
+        daysWorkedInLastMonth: 20,
+        expiredVacationDays: 30,
+      },
+      ruleSet2026_01
+    );
+    expect(result.items.find((i) => i.key === 'vacation-expired')!.amount).toBe(toCents(4000));
+  });
+
+  describe('multa do FGTS com saldo informado', () => {
+    // 01/03/2024 a 15/06/2026: depósitos da rescisão = 8% de (1.500 + 3.600 + 1.750) = 548
+    const withBalance: TerminationInput = {
+      admissionDate: new Date(Date.UTC(2024, 2, 1)),
+      terminationDate: new Date(Date.UTC(2026, 5, 15)),
+      grossSalary: toCents(3000),
+      terminationType: 'without_cause',
+      noticeMode: 'indemnified',
+      dependents: 0,
+      daysWorkedInLastMonth: 15,
+      actualFgtsBalance: toCents(10000),
+    };
+    const fine = (input: TerminationInput) => calculateTermination(input, ruleSet2026_01).items.find((i) => i.key === 'fgts-fine')!.amount;
+
+    it('soma os depósitos da rescisão à base da multa', () => {
+      expect(fine(withBalance)).toBe(toCents(4219.2));
+      const { warnings } = calculateTermination(withBalance, ruleSet2026_01);
+      expect(warnings.some((w) => w.includes('R$\u00a0548,00') && w.includes('R$\u00a04.000,00'))).toBe(true);
+    });
+
+    it('não soma de novo quando o saldo já tem esses depósitos', () => {
+      expect(fine({ ...withBalance, fgtsBalanceIncludesTerminationDeposits: true })).toBe(toCents(4000));
+    });
+
+    it.each([
+      ['sem saldo e sem acordo, uma só leitura', { actualFgtsBalance: undefined }, 0],
+      ['com saldo, duas leituras do saldo', {}, 1],
+      ['no acordo sem saldo, duas leituras da projeção', { actualFgtsBalance: undefined, terminationType: 'agreement' as const }, 1],
+      ['no acordo com saldo, as combinações das duas', { terminationType: 'agreement' as const }, 3],
+    ])('%s', (_, override, count) => {
+      expect(alternativeReadings({ ...withBalance, ...override }, ruleSet2026_01)).toHaveLength(count);
+    });
   });
 
   it('acordo (art. 484-A): aviso pela metade, multa de FGTS 20%, saque até 80%', () => {

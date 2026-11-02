@@ -8,7 +8,7 @@ import { CurrencyInput } from '@/components/ui/CurrencyInput';
 import { DateInput } from '@/components/ui/DateInput';
 import { CalculationBreakdown } from '@/components/shared/CalculationBreakdown';
 import { Disclaimer } from '@/components/shared/Disclaimer';
-import { calculateTermination, projectedContractEnd } from '@/engine/termination';
+import { alternativeReadings, projectedContractEnd } from '@/engine/termination';
 import {
   applicableItems,
   CHECKED_ITEMS,
@@ -183,19 +183,19 @@ function DueAmount({ row }: { row: CheckRow }) {
 
 function CheckSummary({
   due,
-  alternative,
+  alternatives,
   received,
   lateFine,
   deadlines,
 }: {
   due: CalculationResult;
-  /** Acordo com aviso indenizado: o cálculo pela outra leitura sobre a projeção dos avos (ver o aviso do motor). */
-  alternative?: CalculationResult;
+  /** Cálculos pelas outras leituras possíveis, para mostrar a faixa do que é devido. */
+  alternatives: CalculationResult[];
   received: ReceivedAmounts;
   lateFine: { fine: Cents; daysLate: number; deadline: Date } | null;
   deadlines: Deadline[];
 }) {
-  const check = compareTermination(due, received, alternative);
+  const check = compareTermination(due, received, alternatives);
   const fine = lateFine?.fine ?? 0;
   const total = check.totalShortfall + fine;
   const today = todayUtc();
@@ -274,11 +274,18 @@ function CheckSummary({
         </p>
       )}
 
-      {check.rows.some((row) => row.dueRange) && (
+      {check.rows.some((row) => row.dueRange && row.key !== 'fgtsFine') && (
         <p className="border-t bg-amber-50 px-6 py-3 text-xs text-amber-800">
           Acordo (art. 484-A): a lei não diz se o aviso pago pela metade também projeta só metade dos dias nos avos de 13º
           e férias. Por isso, algumas verbas têm uma faixa: da menor conta (metade dos dias) à maior (todos os dias). Um
           valor dentro da faixa não é tratado como erro.
+        </p>
+      )}
+
+      {check.rows.some((row) => row.key === 'fgtsFine' && row.dueRange) && (
+        <p className="border-t bg-amber-50 px-6 py-3 text-xs text-amber-800">
+          Multa do FGTS: a faixa existe porque não dá para saber se o saldo informado já tem os depósitos desta rescisão,
+          que também entram na base da multa. Se houve saques no contrato, a multa também incide sobre eles.
         </p>
       )}
 
@@ -342,10 +349,7 @@ export function TerminationCheckCalculator() {
   }
 
   const input = form.input;
-  const alternative =
-    input?.terminationType === 'agreement' && input.noticeMode === 'indemnified'
-      ? calculateTermination({ ...input, agreementProjection: 'full' }, getRulesFor(input.terminationDate))
-      : undefined;
+  const alternatives = input ? alternativeReadings(input, getRulesFor(input.terminationDate)) : [];
   const deadlines = input
     ? terminationDeadlines({
         terminationDate: input.terminationDate,
@@ -411,7 +415,7 @@ export function TerminationCheckCalculator() {
           <>
             <CheckSummary
               due={result}
-              alternative={alternative}
+              alternatives={alternatives}
               received={received}
               lateFine={lateFine}
               deadlines={deadlines}

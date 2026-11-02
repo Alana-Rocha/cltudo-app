@@ -50,6 +50,29 @@ test.describe('Conferir rescisão', () => {
     await expect(page.getByRole('row', { name: /INSS descontado/ })).toContainText('faltam R$ 100,00');
   });
 
+  test('multa do FGTS: dentro da faixa confere, abaixo dela aponta a falta', async ({ page, calculator }) => {
+    // Faixa: 40% de 10.000 = 4.000 a 40% de 10.548 (saldo + depósitos da rescisão) = 4.219,20
+    await fillContract(calculator);
+    const fineRow = page.getByRole('row', { name: /Multa do FGTS/ });
+
+    await calculator.fill('Multa do FGTS depositada', '4.100,00');
+    await expect(fineRow).toContainText('confere');
+    await expect(fineRow).toContainText(/4\.000,00\s*a R\$\s4\.219,20/);
+    await expect(calculator.result.getByText(/Multa do FGTS: a faixa existe/)).toBeVisible();
+
+    await calculator.fill('Multa do FGTS depositada', '3.000,00');
+    await expect(fineRow).toContainText('faltam R$ 1.000,00');
+    await expect(page.getByTestId('check-headline')).toHaveText('R$ 1.000,00');
+  });
+
+  test('justa causa: férias proporcionais não são devidas', async ({ page, calculator }) => {
+    await fillContract(calculator);
+    await calculator.choose('Tipo de desligamento', 'Justa causa');
+    await calculator.fill('Férias + 1/3 recebidas', '1.000,00');
+
+    await expect(page.getByRole('row', { name: /Férias \+ 1\/3/ })).toContainText('R$ 1.000,00 a mais');
+  });
+
   test('pagamento depois de 10 dias: multa de um salário (art. 477)', async ({ page, calculator }) => {
     // Desligamento 15/05/2026 → prazo 25/05/2026; pago em 01/06/2026, 7 dias depois
     await fillContract(calculator, '15/05/2026');

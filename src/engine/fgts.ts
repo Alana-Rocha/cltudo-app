@@ -8,6 +8,8 @@ export type FgtsFineInput = {
   terminationType: TerminationType;
   /** Saldo real do FGTS informado pelo usuário; se ausente, é estimado. */
   actualBalance?: Cents;
+  /** O saldo informado ainda não tem os depósitos desta rescisão, que também entram na base da multa. */
+  addTerminationDeposits?: boolean;
   grossSalary: Cents;
   monthsEmployed: number; // for the balance estimate, when actualBalance is absent
   thirteenthAmount: Cents; // 13º integral do ano de saída, para a base de depósito
@@ -66,7 +68,10 @@ export function calculateFgtsFine(input: FgtsFineInput, rules: RuleSet): FgtsFin
     );
   }
 
-  const fine = fineRate > 0 ? multiply(estimatedBalance, fineRate) : 0;
+  // A multa incide sobre todos os depósitos do contrato, inclusive os do mês da rescisão (Lei 8.036/1990, art. 18).
+  const fineBase =
+    input.actualBalance !== undefined && input.addTerminationDeposits ? add(estimatedBalance, depositsOnTermination) : estimatedBalance;
+  const fine = fineRate > 0 ? multiply(fineBase, fineRate) : 0;
 
   return { fineRate, estimatedBalance, usedEstimate, depositsOnTermination, fine, warnings };
 }

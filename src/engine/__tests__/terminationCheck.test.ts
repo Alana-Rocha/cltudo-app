@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { calculateTermination, projectedContractEnd, type TerminationInput } from '../termination';
+import { alternativeReadings, calculateTermination, projectedContractEnd, type TerminationInput } from '../termination';
 import { compareTermination, latePaymentFine, terminationDeadlines } from '../terminationCheck';
 import { ruleSet2026_01 } from '@/rules/2026-01';
 import { toCents } from '@/lib/money';
@@ -52,9 +52,32 @@ describe('compareTermination', () => {
   });
 
   it('soma a multa do FGTS paga a menos ao que falta no TRCT', () => {
-    // Multa: 40% de 10.000 = 4.000
+    // Multa: 40% de 10.548 (saldo + depósitos da rescisão) = 4.219,20
     const check = compareTermination(due, { net: TRCT_NET, fgtsFine: toCents(2000) });
-    expect(check.totalShortfall).toBe(toCents(2000));
+    expect(check.totalShortfall).toBe(toCents(2219.2));
+  });
+
+  describe('multa do FGTS: o saldo pode ou não ter os depósitos da rescisão', () => {
+    const readings = alternativeReadings(input, ruleSet2026_01);
+    const fineRow = (fgtsFine: number) => compareTermination(due, { fgtsFine: toCents(fgtsFine) }, readings).rows.find((row) => row.key === 'fgtsFine')!;
+
+    it('a faixa vai de 40% do saldo a 40% do saldo mais os depósitos', () => {
+      expect(fineRow(4000).dueRange).toEqual({ low: toCents(4000), high: toCents(4219.2) });
+    });
+
+    it.each([4000, 4100, 4219.2])('multa de %d confere', (value) => {
+      expect(fineRow(value)).toMatchObject({ status: 'ok', shortfall: 0 });
+    });
+
+    it('abaixo da faixa, falta a diferença até a menor conta', () => {
+      expect(fineRow(3000)).toMatchObject({ status: 'short', shortfall: toCents(1000) });
+    });
+
+    it('a faixa da multa não muda o líquido do TRCT, que não inclui a multa', () => {
+      const check = compareTermination(due, { net: TRCT_NET }, readings);
+      expect(check.rows.find((row) => row.key === 'net')).toMatchObject({ due: TRCT_NET, status: 'ok' });
+      expect(check.rows.find((row) => row.key === 'net')!.dueRange).toBeUndefined();
+    });
   });
 
   it('recebeu a mais aparece como diferença negativa', () => {
@@ -84,7 +107,7 @@ describe('compareTermination — acordo (art. 484-A), com faixa entre as duas le
   const half = calculateTermination(agreement, ruleSet2026_01);
   const full = calculateTermination({ ...agreement, agreementProjection: 'full' }, ruleSet2026_01);
   const row = (received: Parameters<typeof compareTermination>[1], key: string) =>
-    compareTermination(half, received, full).rows.find((r) => r.key === key)!;
+    compareTermination(half, received, [full]).rows.find((r) => r.key === key)!;
 
   it('só as verbas afetadas pela projeção têm faixa', () => {
     expect(row({}, 'thirteenth').dueRange).toEqual({ low: toCents(2500), high: toCents(2750) });
@@ -99,7 +122,7 @@ describe('compareTermination — acordo (art. 484-A), com faixa entre as duas le
   ])('13º %s confere', (_, value) => {
     const received = { thirteenth: toCents(value) };
     expect(row(received, 'thirteenth')).toMatchObject({ status: 'ok', shortfall: 0 });
-    expect(compareTermination(half, received, full).totalShortfall).toBe(0);
+    expect(compareTermination(half, received, [full]).totalShortfall).toBe(0);
   });
 
   it('abaixo da faixa, falta a diferença até a menor leitura', () => {
@@ -118,7 +141,7 @@ describe('compareTermination — acordo (art. 484-A), com faixa entre as duas le
 
   it('líquido dentro da faixa não esconde uma verba abaixo dela', () => {
     const { low, high } = row({}, 'net').dueRange!;
-    const check = compareTermination(half, { net: Math.round((low + high) / 2), vacation: row({}, 'vacation').due - toCents(300) }, full);
+    const check = compareTermination(half, { net: Math.round((low + high) / 2), vacation: row({}, 'vacation').due - toCents(300) }, [full]);
     expect(check.rows.find((r) => r.key === 'net')!.status).toBe('ok');
     expect(check.totalShortfall).toBe(toCents(300));
   });
