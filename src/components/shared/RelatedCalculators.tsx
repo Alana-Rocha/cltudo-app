@@ -25,7 +25,7 @@ export function RelatedCalculators() {
           <Link
             key={calc.slug}
             href={`/${calc.slug}`}
-            className="card group flex items-center gap-3 p-4 transition hover:border-brand-500"
+            className="card card-link group flex items-center gap-3 p-4"
           >
             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-brand-50 text-brand-700 transition group-hover:bg-brand-100">
               <CalculatorIcon name={calc.icon} className="h-4 w-4" />

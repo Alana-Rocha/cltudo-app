@@ -29,7 +29,7 @@ function CalculatorCard({ calc }: { calc: CalculatorEntry }) {
   }
 
   return (
-    <Link href={`/${calc.slug}`} className="card group flex gap-3 p-4 transition hover:border-brand-500 hover:shadow-md">
+    <Link href={`/${calc.slug}`} className="card card-link group flex gap-3 p-4">
       <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-700 transition group-hover:bg-brand-100">
         <CalculatorIcon name={calc.icon} className="h-4 w-4" />
       </span>
@@ -43,7 +43,7 @@ function CalculatorCard({ calc }: { calc: CalculatorEntry }) {
 
 function FeaturedCard({ calc }: { calc: CalculatorEntry }) {
   return (
-    <Link href={`/${calc.slug}`} className="card group flex flex-col p-4 transition sm:p-5 hover:border-brand-500 hover:shadow-md">
+    <Link href={`/${calc.slug}`} className="card card-link group flex flex-col p-4 sm:p-5">
       <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-600 text-white">
         <CalculatorIcon name={calc.icon} className="h-5 w-5" />
       </span>

@@ -129,6 +129,44 @@ textarea {
     @apply rounded-xl border border-gray-200 bg-white shadow-sm;
   }
 
+  /* Card clicável: sobe um pouco ao receber o mouse ou o foco do teclado. */
+  .card-link {
+    @apply relative;
+    transition: transform 200ms ease-out, border-color 200ms ease-out, box-shadow 200ms ease-out;
+  }
+
+  /* Estende a área do hover para o card não "fugir" do mouse na borda de baixo ao subir. */
+  .card-link::after {
+    content: '';
+    position: absolute;
+    inset: 0 0 -3px;
+  }
+
+  @media (hover: hover) {
+    .card-link:hover {
+      border-color: theme('colors.brand.500');
+      box-shadow: 0 10px 24px -8px rgb(0 0 0 / 0.18);
+      transform: translateY(-3px);
+    }
+  }
+
+  .card-link:focus-visible {
+    border-color: theme('colors.brand.500');
+    box-shadow: 0 10px 24px -8px rgb(0 0 0 / 0.18);
+    transform: translateY(-3px);
+  }
+
+  .card-link:active {
+    transform: translateY(0);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .card-link:hover,
+    .card-link:focus-visible {
+      transform: none;
+    }
+  }
+
   .result-hero {
     background: linear-gradient(180deg, theme('colors.brand.50'), theme('colors.white'));
   }
@@ -149,6 +187,19 @@ textarea {
   background-color: theme('colors.gray.800');
   border-color: theme('colors.gray.700');
   box-shadow: none;
+}
+
+/* `.dark .card` zera a sombra e fixa a borda, então o hover precisa ser redeclarado aqui. */
+@media (hover: hover) {
+  .dark .card-link:hover {
+    border-color: theme('colors.brand.500');
+    box-shadow: 0 10px 24px -8px rgb(0 0 0 / 0.6);
+  }
+}
+
+.dark .card-link:focus-visible {
+  border-color: theme('colors.brand.500');
+  box-shadow: 0 10px 24px -8px rgb(0 0 0 / 0.6);
 }
 
 .dark .result-hero {

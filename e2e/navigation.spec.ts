@@ -39,6 +39,21 @@ test.describe('Página inicial', () => {
   });
 });
 
+test.describe('Cards de calculadora', () => {
+  test('sobem ao passar o mouse e voltam ao sair', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'sem mouse no celular');
+    await page.goto('/');
+    const card = page.locator('main a[href="/calculadora-ferias"]').first();
+    const transform = () => card.evaluate((el) => getComputedStyle(el).transform);
+
+    await card.hover();
+    await expect.poll(transform).toBe('matrix(1, 0, 0, 1, 0, -3)');
+
+    await page.mouse.move(0, 0);
+    await expect.poll(transform).toBe('none');
+  });
+});
+
 test.describe('Navegação entre páginas', () => {
   test('menu do topo marca a página atual', async ({ page, isMobile }) => {
     test.skip(isMobile, 'o menu do topo fica escondido no celular');
