@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   description: `Como o ${site.name} trata os dados de quem usa as calculadoras.`,
 };
 
-const LAST_UPDATED = '1º de novembro de 2026';
+const LAST_UPDATED = '2 de novembro de 2026';
 
 export default function PrivacyPage() {
   return (
@@ -28,9 +28,8 @@ export default function PrivacyPage() {
           para nenhum servidor do {site.name}.
         </p>
         <p>
-          Para você não perder o que preencheu ao recarregar a página, esses valores ficam guardados no armazenamento
-          local do seu navegador (localStorage). Eles não saem do seu dispositivo e você pode apagá-los limpando os
-          dados deste site nas configurações do navegador.
+          Esses valores ficam apenas na memória da página enquanto você navega pelo site. Eles não são gravados no seu
+          navegador e somem quando você recarrega ou fecha a página.
         </p>
       </Section>
 
@@ -38,7 +37,7 @@ export default function PrivacyPage() {
         <p>
           Na conferência de rescisão, você pode anexar o Termo de Rescisão (TRCT) em PDF. O arquivo é lido no seu
           próprio navegador: ele <strong>não é enviado</strong> para nenhum servidor do {site.name} nem de terceiros, e
-          não é guardado. Só os valores encontrados vão para os campos da calculadora, onde ficam salvos como qualquer
+          não é guardado. Só os valores encontrados vão para os campos da calculadora, onde são tratados como qualquer
           valor que você digita.
         </p>
       </Section>

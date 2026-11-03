@@ -6,8 +6,8 @@ function buildSharedLink(slug: string, data: Record<string, unknown>): string {
   return `/${slug}#dados=${encoded}`;
 }
 
-test.describe('Valores salvos no navegador', () => {
-  test('o que foi preenchido continua lá depois de recarregar', async ({ page, calculator }) => {
+test.describe('Valores preenchidos', () => {
+  test('somem ao recarregar e não ficam salvos no navegador', async ({ page, calculator }) => {
     await calculator.open('calculadora-salario-liquido');
     await calculator.fill('Salário bruto', '6.000,00');
     await calculator.expectHeadline('Salário líquido', 'R$ 4.973,39');
@@ -15,8 +15,31 @@ test.describe('Valores salvos no navegador', () => {
     await page.reload();
     await calculator.waitForHydration();
 
+    await expect(calculator.field('Salário bruto')).toHaveValue('');
+    expect(await page.evaluate(() => JSON.stringify(localStorage))).not.toContain('6.000,00');
+  });
+
+  test('continuam lá ao navegar pelo site e voltar', async ({ page, calculator }) => {
+    await calculator.open('calculadora-salario-liquido');
+    await calculator.fill('Salário bruto', '6.000,00');
+
+    await page.getByRole('navigation').getByRole('link', { name: 'Férias' }).first().click();
+    await expect(page).toHaveURL(/\/calculadora-ferias$/);
+    await page.goBack();
+    await calculator.waitForHydration();
+
     await expect(calculator.field('Salário bruto')).toHaveValue('6.000,00');
-    await calculator.expectHeadline('Salário líquido', 'R$ 4.973,39');
+  });
+
+  test('apaga o que versões anteriores salvaram no navegador', async ({ page, calculator }) => {
+    await calculator.open('calculadora-ferias');
+    await page.evaluate(() => localStorage.setItem('calculadora-ferias:gross', '"2.556,00"'));
+
+    await page.reload();
+    await calculator.waitForHydration();
+
+    await expect(calculator.field('Salário bruto')).toHaveValue('');
+    expect(await page.evaluate(() => localStorage.getItem('calculadora-ferias:gross'))).toBeNull();
   });
 });
 
@@ -37,7 +60,7 @@ test.describe('Copiar link do cálculo', () => {
     expect(sharedUrl.search, 'nada na query string, que chega ao servidor').toBe('');
     expect(sharedUrl.hash).toMatch(/^#dados=/);
 
-    // Outro contexto = outro navegador, sem o localStorage de quem compartilhou.
+    // Outro contexto = outro navegador, sem os valores de quem compartilhou.
     const otherContext = await browser.newContext({ locale: 'pt-BR' });
     const otherPage = await otherContext.newPage();
     const requests: string[] = [];

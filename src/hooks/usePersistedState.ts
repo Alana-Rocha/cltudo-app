@@ -1,18 +1,34 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { readSharedState } from '@/lib/shareState';
+import { formValues, readSharedState } from '@/lib/shareState';
 
-// Links compartilhados e o localStorage vêm de fora: um valor de outro tipo
-// (objeto, null, número no lugar de texto) quebraria a calculadora ao renderizar.
+// Links compartilhados vêm de fora: um valor de outro tipo (objeto, null,
+// número no lugar de texto) quebraria a calculadora ao renderizar.
 function isSameType<T>(candidate: unknown, initialValue: T): candidate is T {
   return typeof candidate === typeof initialValue && candidate !== null && !Array.isArray(candidate);
 }
 
+let legacyStorageCleared = false;
+
+// Versões anteriores guardavam os valores no localStorage: apaga o que ficou lá.
+function clearLegacyStorage() {
+  if (legacyStorageCleared) return;
+  legacyStorageCleared = true;
+  try {
+    Object.keys(localStorage)
+      .filter((key) => /^(calculadora-|conferir-)[^:]*:/.test(key))
+      .forEach((key) => localStorage.removeItem(key));
+  } catch {
+    // localStorage indisponível (modo privado, etc.) — não há o que apagar.
+  }
+}
+
 /**
- * Like useState, but rehydrates from and syncs to localStorage under `key`.
- * Always starts from `initialValue` on the first render (server and client
- * match, avoiding a hydration mismatch) and swaps in the stored value right
+ * Like useState, but keeps the value in memory under `key`, so it survives
+ * navigating between pages and is gone on reload: nothing typed stays saved in
+ * the browser. Always starts from `initialValue` on the first render (server and
+ * client match, avoiding a hydration mismatch) and swaps in the kept value right
  * after mount, if any.
  *
  * `hydrated` is state (not a ref) on purpose: the read effect's `setValue`
@@ -28,26 +44,17 @@ export function usePersistedState<T>(key: string, initialValue: T) {
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    try {
-      const fromLink = readSharedState();
-      const stored = localStorage.getItem(key);
-      const candidate = fromLink && key in fromLink ? fromLink[key] : stored !== null ? JSON.parse(stored) : undefined;
-      if (isSameType(candidate, initialValue)) setValue(candidate);
-    } catch {
-      // localStorage indisponível ou valor corrompido — mantém o padrão.
-    } finally {
-      setHydrated(true);
-    }
+    clearLegacyStorage();
+    const fromLink = readSharedState();
+    const candidate = fromLink && key in fromLink ? fromLink[key] : formValues.get(key);
+    if (isSameType(candidate, initialValue)) setValue(candidate);
+    setHydrated(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key]);
 
   useEffect(() => {
-    if (!hydrated) return; // evita sobrescrever o valor salvo com o initialValue antes da hidratação
-    try {
-      localStorage.setItem(key, JSON.stringify(value));
-    } catch {
-      // localStorage indisponível (modo privado, cota cheia, etc.) — segue sem persistir.
-    }
+    if (!hydrated) return; // evita sobrescrever o valor guardado com o initialValue antes da hidratação
+    formValues.set(key, value);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key, hydrated, value]);
 

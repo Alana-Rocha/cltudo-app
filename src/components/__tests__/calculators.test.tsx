@@ -8,13 +8,17 @@ import { calculateSalary } from '@/engine/salary';
 import { getRulesFor } from '@/rules';
 import { toCents } from '@/lib/money';
 import { formatCurrency } from '@/lib/format';
+import { formValues } from '@/lib/shareState';
 
 beforeAll(() => {
   // jsdom não implementa scrollIntoView, usado ao clicar em Calcular.
   Element.prototype.scrollIntoView = vi.fn();
 });
 
-beforeEach(() => localStorage.clear());
+beforeEach(() => {
+  localStorage.clear();
+  formValues.clear();
+});
 afterEach(cleanup);
 
 // formatCurrency usa espaço não separável; o Testing Library normaliza o texto da página para espaço comum.
@@ -46,8 +50,8 @@ describe('SalaryCalculator', () => {
     expect(screen.getByText(/Informe um salário bruto/)).toBeTruthy();
   });
 
-  it('valores de um link compartilhado têm prioridade sobre os salvos no navegador', async () => {
-    localStorage.setItem('calculadora-salario-liquido:gross', JSON.stringify('1.000,00'));
+  it('valores de um link compartilhado têm prioridade sobre os já preenchidos', async () => {
+    formValues.set('calculadora-salario-liquido:gross', '1.000,00');
     const shared = btoa(JSON.stringify({ 'calculadora-salario-liquido:gross': '6.000,00' }));
     window.history.replaceState(null, '', `/calculadora-salario-liquido#dados=${shared}`);
 
@@ -68,10 +72,17 @@ describe('SalaryCalculator', () => {
     expect(input.value).toBe('');
   });
 
-  it('restaura o resultado dos dados salvos ao recarregar', async () => {
-    localStorage.setItem('calculadora-salario-liquido:gross', JSON.stringify('3.000,00'));
+  it('restaura o resultado ao voltar para a página durante a navegação', async () => {
+    formValues.set('calculadora-salario-liquido:gross', '3.000,00');
     render(<SalaryCalculator />);
     expect(await screen.findByText('Salário líquido')).toBeTruthy();
+  });
+
+  it('não grava os valores no navegador', () => {
+    render(<SalaryCalculator />);
+    type(/Salário bruto/, '600000');
+    expect(formValues.get('calculadora-salario-liquido:gross')).toBe('6.000,00');
+    expect(localStorage.getItem('calculadora-salario-liquido:gross')).toBeNull();
   });
 });
 

@@ -1,5 +1,9 @@
 const PARAM = 'dados';
 
+// Valores preenchidos nas calculadoras. Ficam só em memória: sobrevivem à
+// navegação entre páginas e somem ao recarregar.
+export const formValues = new Map<string, unknown>();
+
 function encode(data: Record<string, unknown>): string {
   const bytes = new TextEncoder().encode(JSON.stringify(data));
   let binary = '';
@@ -26,7 +30,7 @@ let cache: { hash: string; data: Record<string, unknown> | null } | null = null;
  * Values from a shared link. They travel in the hash (#dados=...), which the
  * browser never sends to the server, so salaries don't end up in access logs.
  * The hash is removed from the address bar right after the mount effects that
- * read it, so later edits aren't overwritten by the link on reload.
+ * read it, so the values don't linger in the address bar or the history.
  */
 export function readSharedState(): Record<string, unknown> | null {
   const url = new URL(window.location.href);
@@ -44,15 +48,9 @@ export function readSharedState(): Record<string, unknown> | null {
 
 export function buildShareUrl(prefix: string): string {
   const data: Record<string, unknown> = {};
-  for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i);
-    if (!key || !key.startsWith(`${prefix}:`)) continue;
-    try {
-      data[key] = JSON.parse(localStorage.getItem(key) ?? 'null');
-    } catch {
-      // valor corrompido — fica fora do link
-    }
-  }
+  formValues.forEach((value, key) => {
+    if (key.startsWith(`${prefix}:`)) data[key] = value;
+  });
   const url = new URL(window.location.href);
   url.search = '';
   url.hash = new URLSearchParams({ [PARAM]: encode(data) }).toString();
