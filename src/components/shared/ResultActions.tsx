@@ -2,8 +2,10 @@
 
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { Check, Link2, Printer } from 'lucide-react';
-import { buildShareUrl } from '@/lib/shareState';
+import { Check, Link2, MessageCircle, Printer } from 'lucide-react';
+import { site } from '@/config/site';
+import { buildShareUrl, buildWhatsAppUrl } from '@/lib/shareState';
+import { registry } from '@/registry';
 
 export function ResultActions() {
   const pathname = usePathname();
@@ -22,6 +24,10 @@ export function ResultActions() {
     }
   }
 
+  const path = pathname ?? '';
+  const entry = registry.find((c) => `/${c.slug}` === path);
+  const whatsAppMessage = entry ? `${entry.title} no ${site.name}: ${entry.shortDescription}` : `${site.name}: ${site.tagline}`;
+
   const buttonClass =
     'inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm font-medium text-gray-600 transition hover:border-brand-500';
 
@@ -32,6 +38,15 @@ export function ResultActions() {
           {copied ? <Check className="h-4 w-4" aria-hidden="true" /> : <Link2 className="h-4 w-4" aria-hidden="true" />}
           {copied ? 'Link copiado' : 'Copiar link do cálculo'}
         </button>
+        <a
+          href={buildWhatsAppUrl(`${site.url}${path}`, whatsAppMessage)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={buttonClass}
+        >
+          <MessageCircle className="h-4 w-4" aria-hidden="true" />
+          Enviar no WhatsApp
+        </a>
         <button type="button" onClick={() => window.print()} className={buttonClass}>
           <Printer className="h-4 w-4" aria-hidden="true" />
           Imprimir

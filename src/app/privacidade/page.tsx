@@ -46,7 +46,8 @@ export default function PrivacyPage() {
       <Section title="Links compartilhados">
         <p>
           Ao usar &ldquo;Copiar link do cálculo&rdquo;, os valores preenchidos vão codificados no próprio endereço. Quem
-          receber o link consegue ver esses valores. O {site.name} não guarda cópia dos links gerados.
+          receber o link consegue ver esses valores. O {site.name} não guarda cópia dos links gerados. Já o botão
+          &ldquo;Enviar no WhatsApp&rdquo; envia só o endereço da calculadora, sem os valores preenchidos.
         </p>
       </Section>
 

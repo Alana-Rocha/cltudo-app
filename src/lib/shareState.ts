@@ -58,3 +58,15 @@ export function buildShareUrl(prefix: string): string {
   url.hash = new URLSearchParams({ [PARAM]: encode(data) }).toString();
   return url.toString();
 }
+
+/**
+ * Link to recommend a page on WhatsApp. It carries only the page address, never
+ * the values: wa.me receives the text in the query string, so a #dados=... inside
+ * it would reach WhatsApp's servers.
+ */
+export function buildWhatsAppUrl(pageUrl: string, message: string): string {
+  const url = new URL(pageUrl);
+  url.search = new URLSearchParams({ utm_source: 'whatsapp', utm_medium: 'share' }).toString();
+  url.hash = '';
+  return `https://wa.me/?text=${encodeURIComponent(`${message}\n${url.toString()}`)}`;
+}

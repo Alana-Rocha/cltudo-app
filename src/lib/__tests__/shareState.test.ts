@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it } from 'vitest';
-import { buildShareUrl, readSharedState } from '../shareState';
+import { buildShareUrl, readSharedState, buildWhatsAppUrl } from '../shareState';
 
 const flushMicrotasks = () => new Promise((r) => setTimeout(r, 0));
 
@@ -49,5 +49,18 @@ describe('shareState', () => {
     window.history.replaceState(null, '', '/calculadora-ferias#dados=%%%nao-e-base64');
     expect(readSharedState()).toBeNull();
     await flushMicrotasks();
+  });
+});
+
+describe('buildWhatsAppUrl', () => {
+  it('leva a mensagem e o endereço limpo, com UTM e sem os valores do cálculo', () => {
+    const url = new URL(buildWhatsAppUrl('https://cltudo.com.br/calculadora-fgts#dados=abc', 'FGTS no CLTudo'));
+
+    expect(url.origin).toBe('https://wa.me');
+    expect(url.searchParams.get('text')).toBe(
+      'FGTS no CLTudo\nhttps://cltudo.com.br/calculadora-fgts?utm_source=whatsapp&utm_medium=share',
+    );
+    expect(url.href).not.toContain('dados');
+    expect(url.search).toContain('FGTS%20no%20CLTudo'); // o WhatsApp espera %20, não +
   });
 });
