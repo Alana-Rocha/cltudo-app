@@ -17,6 +17,7 @@ import './globals.css';
 const inter = Inter({ subsets: ['latin'], display: 'swap' });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(site.url),
   title: {
     default: 'CLTudo — calculadora trabalhista',
     template: '%s | CLTudo',
@@ -24,6 +25,16 @@ export const metadata: Metadata = {
   description:
     'CLTudo: calcule salário líquido, rescisão, férias, 13º, FGTS e compare CLT x PJ, com as tabelas oficiais desde 2024 e o passo a passo de cada conta.',
   applicationName: 'CLTudo',
+  // Sem title/description aqui: o Next preenche com os da página. A imagem vem de opengraph-image.tsx.
+  openGraph: {
+    type: 'website',
+    locale: 'pt_BR',
+    siteName: 'CLTudo',
+    url: './',
+  },
+  twitter: { card: 'summary_large_image' },
+  // Os links com UTM apontam para o endereço limpo da página.
+  alternates: { canonical: './' },
   // O script do AdSense só carrega após o consentimento; a meta tag deixa o robô de verificação achar o publisher.
   other: site.ads.adsenseClient ? { 'google-adsense-account': site.ads.adsenseClient } : {},
 };

@@ -62,6 +62,20 @@ test.describe('SEO', () => {
     expect(robots).toMatch(/Sitemap: https?:\/\/.+\/sitemap\.xml/);
   });
 
+  test('cada calculadora tem prévia própria ao compartilhar', async ({ page, request }) => {
+    await page.goto('/conferir-rescisao');
+
+    const og = (property: string) => page.locator(`meta[property="og:${property}"]`);
+    await expect(og('title')).toHaveAttribute('content', /^Conferir Rescisão.*\| CLTudo$/);
+    await expect(og('description')).toHaveAttribute('content', /Termo de Rescisão/);
+    await expect(og('url')).toHaveAttribute('content', /\/conferir-rescisao$/);
+    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', /\/conferir-rescisao$/);
+
+    const image = await og('image').first().getAttribute('content');
+    const response = await request.get(new URL(image!).pathname);
+    expect(response.headers()['content-type']).toBe('image/png');
+  });
+
   test('cada calculadora tem título e descrição próprios', async ({ page }) => {
     const titles = new Set<string>();
     for (const { slug } of availableCalculators) {
